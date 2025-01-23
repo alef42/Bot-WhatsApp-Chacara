@@ -1,0 +1,45 @@
+2025/01/23-12:03:53.882 67c Reusing MANIFEST C:\Users\alef.santos\Downloads\API-WHATSAP\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/01/23-12:03:53.883 67c Recovering log #638
+2025/01/23-12:03:53.978 67c Reusing old log C:\Users\alef.santos\Downloads\API-WHATSAP\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000638.log 
+2025/01/23-12:03:55.444 1fd4 Level-0 table #654: started
+2025/01/23-12:03:55.469 1fd4 Level-0 table #654: 975937 bytes OK
+2025/01/23-12:03:55.471 1fd4 Delete type=0 #638
+2025/01/23-12:03:55.472 588c Manual compaction at level-0 from '\x00*\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00+\x00\x00\x00' @ 0 : 0; will stop at '\x00*\x00\x00\x05' @ 2767358 : 1
+2025/01/23-12:03:55.473 588c Compacting 1@0 + 0@1 files
+2025/01/23-12:03:55.501 588c Generated table #655@0: 16306 keys, 317016 bytes
+2025/01/23-12:03:55.512 588c Generated table #656@0: 70 keys, 6374 bytes
+2025/01/23-12:03:55.512 588c Compacted 1@0 + 0@1 files => 323390 bytes
+2025/01/23-12:03:55.513 588c compacted to: files[ 0 2 11 0 0 0 0 ]
+2025/01/23-12:03:55.514 588c Delete type=2 #654
+2025/01/23-12:03:55.515 588c Manual compaction at level-0 from '\x00*\x00\x00\x05' @ 2767358 : 1 .. '\x00+\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/01/23-12:03:56.790 588c Compacting 1@1 + 10@2 files
+2025/01/23-12:03:56.889 588c Generated table #657@1: 73561 keys, 2236635 bytes
+2025/01/23-12:03:56.956 588c Generated table #658@1: 32996 keys, 2193899 bytes
+2025/01/23-12:03:56.987 588c Generated table #659@1: 2214 keys, 2142738 bytes
+2025/01/23-12:03:57.035 588c Generated table #660@1: 6155 keys, 2147522 bytes
+2025/01/23-12:03:57.122 588c Generated table #661@1: 28487 keys, 2229980 bytes
+2025/01/23-12:03:57.158 588c Generated table #662@1: 5494 keys, 2122458 bytes
+2025/01/23-12:03:57.213 588c Generated table #663@1: 34077 keys, 2160297 bytes
+2025/01/23-12:03:57.309 588c Generated table #664@1: 103038 keys, 2252019 bytes
+2025/01/23-12:03:57.401 588c Generated table #665@1: 102949 keys, 2253369 bytes
+2025/01/23-12:03:57.487 588c Generated table #666@1: 103072 keys, 2251820 bytes
+2025/01/23-12:03:57.500 588c Generated table #667@1: 5177 keys, 114140 bytes
+2025/01/23-12:03:57.500 588c Compacted 1@1 + 10@2 files => 22104877 bytes
+2025/01/23-12:03:57.501 588c compacted to: files[ 0 1 12 0 0 0 0 ]
+2025/01/23-12:03:57.502 588c Delete type=2 #641
+2025/01/23-12:03:57.502 588c Delete type=2 #642
+2025/01/23-12:03:57.502 588c Delete type=2 #643
+2025/01/23-12:03:57.502 588c Delete type=2 #644
+2025/01/23-12:03:57.502 588c Delete type=2 #645
+2025/01/23-12:03:57.502 588c Delete type=2 #646
+2025/01/23-12:03:57.502 588c Delete type=2 #647
+2025/01/23-12:03:57.502 588c Delete type=2 #648
+2025/01/23-12:03:57.502 588c Delete type=2 #649
+2025/01/23-12:03:57.502 588c Delete type=2 #650
+2025/01/23-12:03:57.502 588c Delete type=2 #655
+2025/01/23-12:04:58.001 1fa4 Compacting 1@1 + 1@2 files
+2025/01/23-12:04:58.019 1fa4 Generated table #668@1: 4423 keys, 128995 bytes
+2025/01/23-12:04:58.019 1fa4 Compacted 1@1 + 1@2 files => 128995 bytes
+2025/01/23-12:04:58.020 1fa4 compacted to: files[ 0 0 12 0 0 0 0 ]
+2025/01/23-12:04:58.021 1fa4 Delete type=2 #651
+2025/01/23-12:04:58.021 1fa4 Delete type=2 #656
