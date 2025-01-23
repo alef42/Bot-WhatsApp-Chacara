@@ -8,18 +8,22 @@ const client = new Client({
 })
 
 client.on('qr', qr => {
+  // Gera o QR code para autenticação
   qrcode.generate(qr, { small: true })
 })
 
 client.on('ready', () => {
+  // Informa que o WhatsApp Web está conectado
   console.log('WhatsApp Web conectado!')
 })
 
 client.on('authenticated', session => {
+  // Informa que a autenticação foi bem-sucedida
   console.log('Autenticado com sucesso!')
 })
 
 client.on('auth_failure', msg => {
+  // Informa que houve uma falha na autenticação
   console.error('Falha na autenticação', msg)
 })
 
@@ -37,6 +41,7 @@ function sendPriceOptions(chatId) {
 client.on('message', message => {
   const chatId = message.from
 
+  // Verifica se o estado da conversa já foi inicializado para o chatId
   if (!conversationState[chatId]) {
     conversationState[chatId] = 'initial'
     client.sendMessage(
@@ -51,6 +56,7 @@ client.on('message', message => {
   } else {
     switch (conversationState[chatId]) {
       case 'initial':
+        // Responde com base na opção escolhida pelo usuário
         if (message.body === '1') {
           conversationState[chatId] = 'info'
           client.sendMessage(
@@ -80,12 +86,17 @@ client.on('message', message => {
         }
         break
       case 'info':
+        // Responde com base na opção escolhida pelo usuário sobre as áreas de lazer
         if (message.body === '1') {
           client.sendMessage(
             chatId,
             'Contamos com 2 mesas de pebolim, 1 mesa de ping pong, 1 mesa de sinuca, um amplo campo de futebol, playground para crianças, piscina aquecida, espaço gourmet com fogão a lenha, 2 freezers para bebidas, e duas churrasqueiras. Também temos um espaço para festas com iluminação personalizada e sistema de som controlado pela ALEXA. E não podemos esquecer do espaço para fazer fogueira ao ar livre! 🪵🔥'
           )
-          conversationState[chatId] = 'initial'
+          conversationState[chatId] = 'info_lazer'
+          client.sendMessage(
+            chatId,
+            'Gostaria de saber mais sobre nossos pacotes de preços?\n1. Sim\n2. Não'
+          )
         } else if (message.body === '2') {
           client.sendMessage(
             chatId,
@@ -99,7 +110,25 @@ client.on('message', message => {
           )
         }
         break
+      case 'info_lazer':
+        // Responde com base na opção escolhida pelo usuário sobre pacotes de preços
+        if (message.body === '1') {
+          conversationState[chatId] = 'prices'
+          sendPriceOptions(chatId)
+        } else if (message.body === '2') {
+          conversationState[chatId] = 'initial'
+          const options =
+            'Agora, vamos lá! A Chácara da Paz conta com uma ótima estrutura para você e toda sua família. Como posso ajudar você hoje? Selecione uma das opções abaixo:\n1. Informações sobre a chácara\n2. Disponibilidade de datas\n3. Preços e pacotes\n4. Outras dúvidas'
+          client.sendMessage(chatId, options)
+        } else {
+          client.sendMessage(
+            chatId,
+            'Opção inválida. Por favor, selecione uma das opções numeradas.'
+          )
+        }
+        break
       case 'date':
+        // Verifica se a data está no formato correto
         if (message.body.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
           client.sendMessage(
             chatId,
@@ -114,6 +143,7 @@ client.on('message', message => {
         }
         break
       case 'prices':
+        // Responde com base na opção escolhida pelo usuário sobre preços e pacotes
         if (message.body === '1') {
           client.sendMessage(
             chatId,
@@ -157,13 +187,16 @@ client.on('message', message => {
         }
         break
       case 'other':
+        // Responde a outras dúvidas do usuário
         client.sendMessage(
           chatId,
           'Obrigado pela sua dúvida! Nossa equipe entrará em contato para ajudar você.'
         )
         conversationState[chatId] = 'initial'
         break
+
       default:
+        // Responde a opções inválidas
         client.sendMessage(
           chatId,
           'Opção inválida. Por favor, selecione uma das opções numeradas.'
@@ -173,4 +206,5 @@ client.on('message', message => {
   }
 })
 
+// Inicializa o cliente do WhatsApp Web
 client.initialize()
