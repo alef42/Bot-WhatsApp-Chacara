@@ -1,45 +1,4 @@
-2025/01/23-17:53:02.763 1bc4 Reusing MANIFEST C:\Users\alef.santos\Downloads\API-WHATSAP\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
-2025/01/23-17:53:02.764 1bc4 Recovering log #701
-2025/01/23-17:53:02.874 1bc4 Reusing old log C:\Users\alef.santos\Downloads\API-WHATSAP\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000701.log 
-2025/01/23-17:53:04.435 3588 Level-0 table #718: started
-2025/01/23-17:53:04.461 3588 Level-0 table #718: 1084220 bytes OK
-2025/01/23-17:53:04.463 3588 Delete type=0 #701
-2025/01/23-17:53:04.464 3588 Manual compaction at level-0 from '\x00.\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00/\x00\x00\x00' @ 0 : 0; will stop at '\x00.\x00\x00\x05' @ 2896051 : 1
-2025/01/23-17:53:04.464 3588 Compacting 1@0 + 0@1 files
-2025/01/23-17:53:04.494 3588 Generated table #719@0: 19357 keys, 430741 bytes
-2025/01/23-17:53:04.503 3588 Generated table #720@0: 208 keys, 9990 bytes
-2025/01/23-17:53:04.504 3588 Compacted 1@0 + 0@1 files => 440731 bytes
-2025/01/23-17:53:04.505 3588 compacted to: files[ 0 2 11 0 0 0 0 ]
-2025/01/23-17:53:04.506 3588 Delete type=2 #718
-2025/01/23-17:53:04.507 3588 Manual compaction at level-0 from '\x00.\x00\x00\x05' @ 2896051 : 1 .. '\x00/\x00\x00\x00' @ 0 : 0; will stop at (end)
-2025/01/23-17:53:05.648 40cc Compacting 1@1 + 10@2 files
-2025/01/23-17:53:05.733 40cc Generated table #721@1: 79807 keys, 2246338 bytes
-2025/01/23-17:53:05.810 40cc Generated table #722@1: 36663 keys, 2193878 bytes
-2025/01/23-17:53:05.838 40cc Generated table #723@1: 2275 keys, 2146220 bytes
-2025/01/23-17:53:05.872 40cc Generated table #724@1: 2123 keys, 2151411 bytes
-2025/01/23-17:53:05.950 40cc Generated table #725@1: 31149 keys, 2236721 bytes
-2025/01/23-17:53:05.978 40cc Generated table #726@1: 7273 keys, 2126450 bytes
-2025/01/23-17:53:06.007 40cc Generated table #727@1: 5216 keys, 2121753 bytes
-2025/01/23-17:53:06.096 40cc Generated table #728@1: 103302 keys, 2252933 bytes
-2025/01/23-17:53:06.179 40cc Generated table #729@1: 103246 keys, 2253301 bytes
-2025/01/23-17:53:06.264 40cc Generated table #730@1: 102714 keys, 2252700 bytes
-2025/01/23-17:53:06.275 40cc Generated table #731@1: 4662 keys, 100239 bytes
-2025/01/23-17:53:06.275 40cc Compacted 1@1 + 10@2 files => 22081944 bytes
-2025/01/23-17:53:06.277 40cc compacted to: files[ 0 1 12 0 0 0 0 ]
-2025/01/23-17:53:06.277 40cc Delete type=2 #705
-2025/01/23-17:53:06.277 40cc Delete type=2 #706
-2025/01/23-17:53:06.277 40cc Delete type=2 #707
-2025/01/23-17:53:06.277 40cc Delete type=2 #708
-2025/01/23-17:53:06.277 40cc Delete type=2 #709
-2025/01/23-17:53:06.277 40cc Delete type=2 #710
-2025/01/23-17:53:06.277 40cc Delete type=2 #711
-2025/01/23-17:53:06.277 40cc Delete type=2 #712
-2025/01/23-17:53:06.277 40cc Delete type=2 #713
-2025/01/23-17:53:06.278 40cc Delete type=2 #714
-2025/01/23-17:53:06.278 40cc Delete type=2 #719
-2025/01/23-17:53:13.456 5b00 Compacting 1@1 + 1@2 files
-2025/01/23-17:53:13.511 5b00 Generated table #732@1: 38802 keys, 885990 bytes
-2025/01/23-17:53:13.511 5b00 Compacted 1@1 + 1@2 files => 885990 bytes
-2025/01/23-17:53:13.513 5b00 compacted to: files[ 0 0 12 0 0 0 0 ]
-2025/01/23-17:53:13.514 5b00 Delete type=2 #715
-2025/01/23-17:53:13.514 5b00 Delete type=2 #720
+2025/01/27-11:39:29.296 7b70 Reusing MANIFEST C:\Users\alef.santos\Downloads\API-WHATSAP\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-003825
+2025/01/27-11:39:29.298 7b70 Recovering log #4103
+2025/01/27-11:39:29.355 7b70 Reusing old log C:\Users\alef.santos\Downloads\API-WHATSAP\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/004103.log 
+2025/01/27-11:39:31.058 369c Manual compaction at level-0 from '\x00C\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00D\x00\x00\x00' @ 0 : 0; will stop at (end)

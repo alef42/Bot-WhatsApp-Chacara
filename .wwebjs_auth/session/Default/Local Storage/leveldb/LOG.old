@@ -1,3 +1,6 @@
-2025/01/23-17:53:02.154 4ac0 Reusing MANIFEST C:\Users\alef.santos\Downloads\API-WHATSAP\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
-2025/01/23-17:53:02.155 4ac0 Recovering log #6
-2025/01/23-17:53:02.156 4ac0 Reusing old log C:\Users\alef.santos\Downloads\API-WHATSAP\.wwebjs_auth\session\Default\Local Storage\leveldb/000006.log 
+2025/01/27-11:39:28.499 7b70 Reusing MANIFEST C:\Users\alef.santos\Downloads\API-WHATSAP\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
+2025/01/27-11:39:28.500 7b70 Recovering log #12
+2025/01/27-11:39:28.501 7b70 Reusing old log C:\Users\alef.santos\Downloads\API-WHATSAP\.wwebjs_auth\session\Default\Local Storage\leveldb/000012.log 
+2025/01/27-11:40:29.309 7b70 Level-0 table #17: started
+2025/01/27-11:40:29.318 7b70 Level-0 table #17: 15745 bytes OK
+2025/01/27-11:40:29.320 7b70 Delete type=0 #12
