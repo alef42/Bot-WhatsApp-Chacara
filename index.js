@@ -1,6 +1,9 @@
 const { Client, LocalAuth } = require('whatsapp-web.js')
 const qrcode = require('qrcode-terminal')
 const fs = require('fs-extra')
+const express = require('express')
+const path = require('path')
+const axios = require('axios')
 
 // Cria uma nova instância do cliente com autenticação local
 const client = new Client({
@@ -41,8 +44,21 @@ function sendPriceOptions(chatId) {
   client.sendMessage(chatId, options)
 }
 
+// Função para enviar dados para o portal
+function sendToPortal(data) {
+  console.log('Enviando dados para o portal:', data) // Adicione este log
+  axios
+    .post('http://localhost:3000/api/requests', data)
+    .then(response => {
+      console.log('Dados enviados para o portal:', response.data)
+    })
+    .catch(error => {
+      console.error('Erro ao enviar dados para o portal:', error)
+    })
+}
+
 // Evento para responder automaticamente às mensagens recebidas
-client.on('message', message => {
+client.on('message', async message => {
   const chatId = message.from
 
   // Verifica se a mensagem é do número permitido
@@ -65,7 +81,7 @@ client.on('message', message => {
       )
       setTimeout(() => {
         const options =
-          'Agora, vamos lá! A Chácara da Paz conta com uma ótima estrutura para você e toda sua família. Como posso ajudar você hoje? Selecione uma das opções abaixo:\n1. Informações sobre a chácara\n2. Disponibilidade de datas\n3. Preços e pacotes\n4. Falar com a equipe de atendimento'
+          'Agora, vamos lá! A Chácara da Paz conta com uma ótima estrutura para você e toda sua família. Como posso ajudar você hoje? Selecione uma das opções abaixo:\n1. Informações sobre a chácara\n2. Disponibilidade de datas\n3. Preços e pacotes\n4. Outras dúvidas'
         client.sendMessage(chatId, options)
       }, 1000)
     } else {
@@ -133,7 +149,7 @@ client.on('message', message => {
           } else if (message.body === '2') {
             conversationState[chatId] = 'initial'
             const options =
-              'Agora, vamos lá! A Chácara da Paz conta com uma ótima estrutura para você e toda sua família. Como posso ajudar você hoje? Selecione uma das opções abaixo:\n1. Informações sobre a chácara\n2. Disponibilidade de datas\n3. Preços e pacotes\n4. Falar com a Equipe de atendimento'
+              'Agora, vamos lá! A Chácara da Paz conta com uma ótima estrutura para você e toda sua família. Como posso ajudar você hoje? Selecione uma das opções abaixo:\n1. Informações sobre a chácara\n2. Disponibilidade de datas\n3. Preços e pacotes\n4. Outras dúvidas'
             client.sendMessage(chatId, options)
           } else {
             client.sendMessage(
@@ -149,6 +165,13 @@ client.on('message', message => {
               chatId,
               `Obrigado! Vamos verificar a disponibilidade para a data ${message.body} e entraremos em contato em breve.`
             )
+            // Obter informações do contato
+            const contact = await client.getContactById(chatId)
+            const name =
+              contact.pushname || contact.verifiedName || 'Desconhecido'
+            const number = chatId.split('@')[0] // Extrai o número do chatId
+            // Envia os dados para o portal
+            sendToPortal({ chatId, name, number, date: message.body })
             // Define que um atendente está ativo para este chatId
             attendantActive[chatId] = true
             console.log(`Atendente ativo para ${chatId}. Bot pausado.`)
@@ -195,7 +218,7 @@ client.on('message', message => {
           } else if (message.body === '6') {
             conversationState[chatId] = 'initial'
             const options =
-              'Agora, vamos lá! A Chácara da Paz conta com uma ótima estrutura para você e toda sua família. Como posso ajudar você hoje? Selecione uma das opções abaixo:\n1. Informações sobre a chácara\n2. Disponibilidade de datas\n3. Preços e pacotes\n4. Falar com a equipe de atendimento'
+              'Agora, vamos lá! A Chácara da Paz conta com uma ótima estrutura para você e toda sua família. Como posso ajudar você hoje? Selecione uma das opções abaixo:\n1. Informações sobre a chácara\n2. Disponibilidade de datas\n3. Preços e pacotes\n4. Outras dúvidas'
             client.sendMessage(chatId, options)
           } else {
             client.sendMessage(
@@ -248,3 +271,32 @@ client.on('message_ack', (msg, ack) => {
 
 // Inicializa o cliente do WhatsApp Web
 client.initialize()
+
+// Configuração do servidor Express.js
+const app = express()
+const port = 3000
+
+app.use(express.json())
+
+let requests = []
+
+// Endpoint para receber dados do WhatsApp
+app.post('/api/requests', (req, res) => {
+  const request = req.body
+  requests.push(request)
+  res.status(201).send('Solicitação recebida')
+})
+
+// Endpoint para listar todas as solicitações
+app.get('/api/requests', (req, res) => {
+  res.json(requests)
+})
+
+// Rota para servir o arquivo HTML
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'))
+})
+
+app.listen(port, () => {
+  console.log(`Servidor rodando em http://localhost:${port}`)
+})
