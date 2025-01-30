@@ -1,4 +1,7 @@
-2025/01/27-16:19:31.565 6d14 Reusing MANIFEST C:\Users\alef.santos\Downloads\API-WHATSAP\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-004156
-2025/01/27-16:19:31.566 6d14 Recovering log #4351
-2025/01/27-16:19:31.628 6d14 Reusing old log C:\Users\alef.santos\Downloads\API-WHATSAP\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/004351.log 
-2025/01/27-16:19:33.116 66c Manual compaction at level-0 from '\x00K\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00L\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/01/30-17:20:14.099 520c Reusing MANIFEST C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/01/30-17:20:14.100 520c Recovering log #783
+2025/01/30-17:20:14.233 520c Reusing old log C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000783.log 
+2025/01/30-17:20:15.787 973c Level-0 table #797: started
+2025/01/30-17:20:15.830 973c Level-0 table #797: 1033993 bytes OK
+2025/01/30-17:20:15.833 973c Delete type=0 #783
+2025/01/30-17:20:15.835 973c Manual compaction at level-0 from '\x00a\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00b\x00\x00\x00' @ 0 : 0; will stop at (end)
