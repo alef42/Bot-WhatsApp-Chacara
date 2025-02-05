@@ -19,18 +19,19 @@ let conversationState = {}
 let botActive = true // Estado do bot
 const allowedNumber = '5511941093985@c.us' // Número autorizado
 let attendantActive = {} // Inicializa o objeto
+let inactivityTimers = {} // Armazena os temporizadores de inatividade
 
 // Função para enviar o menu principal
 function sendMainMenu(chatId) {
   const options =
-    '🌿 *Bem-vindo à Chácara da Paz!* 🌞🍃\nComo posso ajudar hoje?\n\n1️⃣ Informações sobre a chácara\n2️⃣ Disponibilidade de datas\n3️⃣ Preços e pacotes\n4️⃣ Outras dúvidas'
+    '🌿 Bem-vindo à Chácara da Paz! 🌞🍃\nComo posso ajudar hoje?\n\n1️⃣ Informações sobre a chácara\n3️⃣ Preços e pacotes\n4️⃣ Outras dúvidas'
   client.sendMessage(chatId, options)
 }
 
 // Função para enviar o menu de pacotes e preços
 function sendPriceOptions(chatId) {
   const options =
-    '💰 *Tabela de Preços:*\n1️⃣ Diárias de Dezembro a Fevereiro\n2️⃣ Diárias de Março a Novembro\n3️⃣ Feriados\n4️⃣ Pacote Carnaval\n5️⃣ Pacote Ano Novo\n6️⃣ 🔙 Voltar ao menu principal'
+    '💰 Tabela de Preços:\n1️⃣ Diárias de Dezembro a Fevereiro\n2️⃣ Diárias de Março a Novembro\n3️⃣ Feriados\n4️⃣ Pacote Carnaval\n5️⃣ Pacote Ano Novo\n6️⃣ 🔙 Voltar ao menu principal'
   client.sendMessage(chatId, options)
 }
 
@@ -41,6 +42,19 @@ function sendToPortal(data) {
     .post('http://localhost:3000/api/requests', data)
     .then(response => console.log('✅ Dados enviados:', response.data))
     .catch(error => console.error('❌ Erro ao enviar:', error))
+}
+
+// Função para iniciar ou reiniciar o temporizador de inatividade
+function resetInactivityTimer(chatId) {
+  if (inactivityTimers[chatId]) {
+    clearTimeout(inactivityTimers[chatId])
+  }
+  inactivityTimers[chatId] = setTimeout(() => {
+    client.sendMessage(
+      chatId,
+      'Você ainda está aí? Precisa de mais alguma coisa?'
+    )
+  }, 300000) // 5 minutos de inatividade
 }
 
 // Evento para responder automaticamente às mensagens recebidas
@@ -72,6 +86,9 @@ client.on('message', async message => {
     return
   }
 
+  // Reinicia o temporizador de inatividade
+  resetInactivityTimer(chatId)
+
   if (!conversationState[chatId]) {
     conversationState[chatId] = 'initial'
     sendMainMenu(chatId)
@@ -92,9 +109,6 @@ function handleUserResponse(chatId, userMessage) {
     case 'info_lazer':
       handleInfoLazerResponse(chatId, userMessage)
       break
-    case 'date':
-      handleDateResponse(chatId, userMessage)
-      break
     case 'prices':
       handlePricesResponse(chatId, userMessage)
       break
@@ -103,6 +117,9 @@ function handleUserResponse(chatId, userMessage) {
       break
     case 'price_options':
       handlePriceOptionsResponse(chatId, userMessage)
+      break
+    case 'date':
+      handleDateResponse(chatId, userMessage)
       break
     default:
       client.sendMessage(
@@ -118,12 +135,8 @@ function handleInitialResponse(chatId, userMessage) {
       conversationState[chatId] = 'info'
       client.sendMessage(
         chatId,
-        '🏡 *A Chácara da Paz* conta com 3 quartos e acomodações para 20 pessoas. Quer saber mais sobre a área de lazer?\n1️⃣ Sim\n2️⃣ Não'
+        '🏡 A Chácara da Paz conta com 3 quartos e acomodações para 20 pessoas. Quer saber mais sobre a área de lazer?\n1️⃣ Sim\n2️⃣ Não'
       )
-      break
-    case '2':
-      conversationState[chatId] = 'date'
-      client.sendMessage(chatId, '📅 Informe a data desejada (dd/mm/yyyy)')
       break
     case '3':
       conversationState[chatId] = 'prices'
@@ -191,20 +204,6 @@ function handleInfoLazerResponse(chatId, userMessage) {
   }
 }
 
-function handleDateResponse(chatId, userMessage) {
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(userMessage.trim())) {
-    client.sendMessage(
-      chatId,
-      `📆 Vamos verificar a disponibilidade para ${userMessage}. Aguarde nosso retorno.`
-    )
-    sendToPortal({ chatId, date: userMessage })
-    // Pausa o bot após receber a data
-    botActive = false
-  } else {
-    client.sendMessage(chatId, '⚠️ Formato de data inválido. Use dd/mm/yyyy')
-  }
-}
-
 function handlePricesResponse(chatId, userMessage) {
   switch (userMessage.trim()) {
     case '1':
@@ -225,7 +224,6 @@ function handlePricesResponse(chatId, userMessage) {
         '⚽️ Valores das diárias em Feriados\nFinal de semana R$ 1.800\n- Check in na sexta às 18:00\n- Check out no domingo às 18:00\n\n1 Diária R$ 1.000\n- Check in às 08:00\n- Check out às 18:00'
       )
       break
-
     case '4':
       client.sendMessage(
         chatId,
@@ -249,21 +247,17 @@ function handlePricesResponse(chatId, userMessage) {
   conversationState[chatId] = 'price_options'
   client.sendMessage(
     chatId,
-    'O que você gostaria de fazer agora?\n1️⃣ Escolher outro tipo de pacote\n2️⃣ Verificar disponibilidade de data\n3️⃣ Voltar ao menu principal'
+    'O que você gostaria de fazer agora?\n1️⃣ Verificar disponibilidade de data\n2️⃣ Voltar ao menu principal'
   )
 }
 
 function handlePriceOptionsResponse(chatId, userMessage) {
   switch (userMessage.trim()) {
     case '1':
-      conversationState[chatId] = 'prices'
-      sendPriceOptions(chatId)
-      break
-    case '2':
       conversationState[chatId] = 'date'
       client.sendMessage(chatId, '📅 Informe a data desejada (dd/mm/yyyy)')
       break
-    case '3':
+    case '2':
       conversationState[chatId] = 'initial'
       sendMainMenu(chatId)
       break
@@ -272,6 +266,20 @@ function handlePriceOptionsResponse(chatId, userMessage) {
         chatId,
         '❌ Opção inválida! Escolha uma das opções numeradas.'
       )
+  }
+}
+
+function handleDateResponse(chatId, userMessage) {
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(userMessage.trim())) {
+    client.sendMessage(
+      chatId,
+      `📆 Vamos verificar a disponibilidade para ${userMessage}. Aguarde nosso retorno.`
+    )
+    sendToPortal({ chatId, date: userMessage })
+    // Pausa o bot após receber a data
+    botActive = false
+  } else {
+    client.sendMessage(chatId, '⚠️ Formato de data inválido. Use dd/mm/yyyy')
   }
 }
 
@@ -286,6 +294,7 @@ client.on('typing', chat => {
   const chatId = chat.id._serialized
   console.log(`Evento 'typing' disparado para ${chatId}`) // Verificação adicional
   if (chatId) {
+    attendantActive[chatId] = true
     console.log(`Atendente começou a digitar em ${chatId}. Bot pausado.`)
   }
 })
