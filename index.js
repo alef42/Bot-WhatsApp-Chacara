@@ -49,12 +49,26 @@ function resetInactivityTimer(chatId) {
   if (inactivityTimers[chatId]) {
     clearTimeout(inactivityTimers[chatId])
   }
-  inactivityTimers[chatId] = setTimeout(() => {
-    client.sendMessage(
+  inactivityTimers[chatId] = setTimeout(async () => {
+    await client.sendMessage(
       chatId,
       'Você ainda está aí? Precisa de mais alguma coisa?'
     )
-  }, 300000) // 5 minutos de inatividade
+    await client.sendMessage(
+      chatId,
+      'O atendimento foi encerrado. Se precisar de mais alguma coisa, estou aqui para ajudar!'
+    )
+    sendMainMenu(chatId)
+  }, 30000) // 5 minutos de inatividade
+}
+
+// Função para simular digitação
+async function simulateTyping(chatId, message) {
+  await client.sendPresenceAvailable()
+  await client.sendTyping(chatId)
+  setTimeout(async () => {
+    await client.sendMessage(chatId, message)
+  }, 2000) // Simula 2 segundos de digitação
 }
 
 // Evento para responder automaticamente às mensagens recebidas
@@ -72,11 +86,11 @@ client.on('message', async message => {
   // Comandos para ativar e desativar o bot
   if (message.body.toLowerCase() === 'ativar bot') {
     botActive = true
-    client.sendMessage(chatId, '🤖 Bot ativado.')
+    await simulateTyping(chatId, '🤖 Bot ativado.')
     return
   } else if (message.body.toLowerCase() === 'desativar bot') {
     botActive = false
-    client.sendMessage(chatId, '🤖 Bot desativado.')
+    await simulateTyping(chatId, '🤖 Bot desativado.')
     return
   }
 
@@ -122,7 +136,7 @@ function handleUserResponse(chatId, userMessage) {
       handleDateResponse(chatId, userMessage)
       break
     default:
-      client.sendMessage(
+      simulateTyping(
         chatId,
         '❌ Opção inválida! Escolha uma das opções numeradas.'
       )
@@ -133,7 +147,7 @@ function handleInitialResponse(chatId, userMessage) {
   switch (userMessage.trim()) {
     case '1':
       conversationState[chatId] = 'info'
-      client.sendMessage(
+      simulateTyping(
         chatId,
         '🏡 A Chácara da Paz conta com 3 quartos e acomodações para 20 pessoas. Quer saber mais sobre a área de lazer?\n1️⃣ Sim\n2️⃣ Não'
       )
@@ -144,13 +158,13 @@ function handleInitialResponse(chatId, userMessage) {
       break
     case '4':
       conversationState[chatId] = 'other'
-      client.sendMessage(
+      simulateTyping(
         chatId,
         '❓ Digite sua dúvida, e nossa equipe responderá em breve!'
       )
       break
     default:
-      client.sendMessage(
+      simulateTyping(
         chatId,
         '❌ Opção inválida! Escolha uma das opções numeradas.'
       )
@@ -160,18 +174,18 @@ function handleInitialResponse(chatId, userMessage) {
 function handleInfoResponse(chatId, userMessage) {
   switch (userMessage.trim()) {
     case '1':
-      client.sendMessage(
+      simulateTyping(
         chatId,
         'Contamos com 2 mesas de pebolim, 1 mesa de ping pong, 1 mesa de sinuca, um amplo campo de futebol, playground para crianças, piscina aquecida, espaço gourmet com fogão a lenha, 2 freezers para bebidas, e duas churrasqueiras. Também temos um espaço para festas com iluminação personalizada e sistema de som controlado pela ALEXA. E não podemos esquecer do espaço para fazer fogueira ao ar livre! 🪵🔥'
       )
       conversationState[chatId] = 'info_lazer'
-      client.sendMessage(
+      simulateTyping(
         chatId,
         'Gostaria de saber mais sobre nossos pacotes de preços?\n1️⃣ Sim\n2️⃣ Não'
       )
       break
     case '2':
-      client.sendMessage(
+      simulateTyping(
         chatId,
         'Obrigado! Se precisar de mais informações, estamos à disposição.'
       )
@@ -179,7 +193,7 @@ function handleInfoResponse(chatId, userMessage) {
       sendMainMenu(chatId)
       break
     default:
-      client.sendMessage(
+      simulateTyping(
         chatId,
         '❌ Opção inválida! Escolha uma das opções numeradas.'
       )
@@ -197,7 +211,7 @@ function handleInfoLazerResponse(chatId, userMessage) {
       sendMainMenu(chatId)
       break
     default:
-      client.sendMessage(
+      simulateTyping(
         chatId,
         '❌ Opção inválida! Escolha uma das opções numeradas.'
       )
@@ -207,37 +221,37 @@ function handleInfoLazerResponse(chatId, userMessage) {
 function handlePricesResponse(chatId, userMessage) {
   switch (userMessage.trim()) {
     case '1':
-      client.sendMessage(
+      simulateTyping(
         chatId,
         '🏖  Final de semana R$ 2.200\n- Check in na sexta às 18:00\n- Check out no domingo às 18:00\n\n1 Diária R$ 1.200\n- Check in às 08:00\n- Check out às 18:00'
       )
       break
     case '2':
-      client.sendMessage(
+      simulateTyping(
         chatId,
         '☀️ Valores das diárias de Março a Novembro\nFinal de semana R$ 1.600\n- Check in na sexta às 18:00\n- Check out no domingo às 18:00\n\n1 Diária R$ 900\n- Check in às 08:00\n- Check out às 18:00'
       )
       break
     case '3':
-      client.sendMessage(
+      simulateTyping(
         chatId,
         '⚽️ Valores das diárias em Feriados\nFinal de semana R$ 1.800\n- Check in na sexta às 18:00\n- Check out no domingo às 18:00\n\n1 Diária R$ 1.000\n- Check in às 08:00\n- Check out às 18:00'
       )
       break
     case '4':
-      client.sendMessage(
+      simulateTyping(
         chatId,
         '🎉 Valor do pacote Carnaval\nReservamos no mínimo 3 diárias\nValor R$ 3.800\n- Check in às 08:00\n- Check out às 18:00'
       )
       break
     case '5':
-      client.sendMessage(
+      simulateTyping(
         chatId,
         '🎊 Valor pacote Ano Novo 2025\nReservamos no mínimo 4 diárias\nValor R$ 8.200\n- Check in às 08:00\n- Check out às 18:00'
       )
       break
     default:
-      client.sendMessage(
+      simulateTyping(
         chatId,
         '❌ Opção inválida! Escolha uma das opções numeradas.'
       )
@@ -245,7 +259,7 @@ function handlePricesResponse(chatId, userMessage) {
       return
   }
   conversationState[chatId] = 'price_options'
-  client.sendMessage(
+  simulateTyping(
     chatId,
     'O que você gostaria de fazer agora?\n1️⃣ Verificar disponibilidade de data\n2️⃣ Voltar ao menu principal'
   )
@@ -255,14 +269,14 @@ function handlePriceOptionsResponse(chatId, userMessage) {
   switch (userMessage.trim()) {
     case '1':
       conversationState[chatId] = 'date'
-      client.sendMessage(chatId, '📅 Informe a data desejada (dd/mm/yyyy)')
+      simulateTyping(chatId, '📅 Informe a data desejada (dd/mm/yyyy)')
       break
     case '2':
       conversationState[chatId] = 'initial'
       sendMainMenu(chatId)
       break
     default:
-      client.sendMessage(
+      simulateTyping(
         chatId,
         '❌ Opção inválida! Escolha uma das opções numeradas.'
       )
@@ -271,7 +285,7 @@ function handlePriceOptionsResponse(chatId, userMessage) {
 
 function handleDateResponse(chatId, userMessage) {
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(userMessage.trim())) {
-    client.sendMessage(
+    simulateTyping(
       chatId,
       `📆 Vamos verificar a disponibilidade para ${userMessage}. Aguarde nosso retorno.`
     )
@@ -279,12 +293,12 @@ function handleDateResponse(chatId, userMessage) {
     // Pausa o bot após receber a data
     botActive = false
   } else {
-    client.sendMessage(chatId, '⚠️ Formato de data inválido. Use dd/mm/yyyy')
+    simulateTyping(chatId, '⚠️ Formato de data inválido. Use dd/mm/yyyy')
   }
 }
 
 function handleOtherResponse(chatId) {
-  client.sendMessage(chatId, '📨 Obrigado! Nossa equipe responderá em breve.')
+  simulateTyping(chatId, '📨 Obrigado! Nossa equipe responderá em breve.')
   // Pausa o bot após receber a dúvida
   botActive = false
 }
