@@ -4,7 +4,6 @@ const express = require('express')
 const path = require('path')
 const axios = require('axios')
 
-// Instância do cliente WhatsApp com autenticação local
 const client = new Client({ authStrategy: new LocalAuth() })
 
 client.on('qr', qr => qrcode.generate(qr, { small: true }))
@@ -14,76 +13,63 @@ client.on('auth_failure', msg =>
   console.error('❌ Falha na autenticação:', msg)
 )
 
-// Variáveis de controle
 let conversationState = {}
-let botActive = true // Estado do bot
-const allowedNumber = '5511941093985@c.us' // Número autorizado
-let attendantActive = {} // Inicializa o objeto
-let inactivityTimers = {} // Armazena os temporizadores de inatividade
+let botActive = true
+const allowedNumber = '5511941093985@c.us'
+let attendantActive = {}
+let inactivityTimers = {}
 
-// Função para enviar o menu principal
 function sendMainMenu(chatId) {
-  const options =
-    '🌿 Bem-vindo à Chácara da Paz! 🌞🍃\nComo posso ajudar hoje?\n\n1️⃣ Informações sobre a chácara\n3️⃣ Preços e pacotes\n4️⃣ Outras dúvidas'
-  client.sendMessage(chatId, options)
+  simulateTyping(
+    chatId,
+    '🌿 Bem-vindo à Chácara da Paz! 🌞🍃\nComo posso ajudar hoje?\n\n1️⃣ Informações sobre a chácara\n2️⃣ Preços e pacotes\n3️⃣ Outras dúvidas',
+    true
+  )
 }
 
-// Função para enviar o menu de pacotes e preços
 function sendPriceOptions(chatId) {
-  const options =
-    '💰 Tabela de Preços:\n1️⃣ Diárias de Dezembro a Fevereiro\n2️⃣ Diárias de Março a Novembro\n3️⃣ Feriados\n4️⃣ Pacote Carnaval\n5️⃣ Pacote Ano Novo\n6️⃣ 🔙 Voltar ao menu principal'
-  client.sendMessage(chatId, options)
+  simulateTyping(
+    chatId,
+    '💰 Tabela de Preços:\n1️⃣ Diárias de Dezembro a Fevereiro\n2️⃣ Diárias de Março a Novembro\n3️⃣ Feriados\n4️⃣ Pacote Carnaval\n5️⃣ Pacote Ano Novo\n6️⃣ 🔙 Voltar ao menu principal',
+    true
+  )
 }
 
-// Função para enviar dados para o portal
-function sendToPortal(data) {
-  console.log('📡 Enviando dados para o portal:', data)
-  axios
-    .post('http://localhost:3000/api/requests', data)
-    .then(response => console.log('✅ Dados enviados:', response.data))
-    .catch(error => console.error('❌ Erro ao enviar:', error))
-}
-
-// Função para iniciar ou reiniciar o temporizador de inatividade
 function resetInactivityTimer(chatId) {
   if (inactivityTimers[chatId]) {
     clearTimeout(inactivityTimers[chatId])
   }
-  inactivityTimers[chatId] = setTimeout(async () => {
-    await client.sendMessage(
-      chatId,
-      'Você ainda está aí? Precisa de mais alguma coisa?'
-    )
-    await client.sendMessage(
-      chatId,
+  inactivityTimers[chatId] = setTimeout(() => {
+    simulateTyping(chatId, [
+      '⏳ Você ainda está aí? Precisa de mais alguma coisa?',
       'O atendimento foi encerrado. Se precisar de mais alguma coisa, estou aqui para ajudar!'
-    )
+    ])
+    conversationState[chatId] = 'initial'
     sendMainMenu(chatId)
-  }, 30000) // 5 minutos de inatividade
+  }, 5601000)
 }
 
-// Função para simular digitação
-async function simulateTyping(chatId, message) {
-  await client.sendPresenceAvailable()
-  await client.sendTyping(chatId)
-  setTimeout(async () => {
+async function simulateTyping(chatId, messages, isMenu = false) {
+  const chat = await client.getChatById(chatId)
+  if (!Array.isArray(messages)) messages = [messages]
+  for (const message of messages) {
+    await chat.sendStateTyping()
+    await new Promise(resolve => setTimeout(resolve, isMenu ? 2000 : 1000))
     await client.sendMessage(chatId, message)
-  }, 2000) // Simula 2 segundos de digitação
+    await chat.clearState()
+    await new Promise(resolve => setTimeout(resolve, isMenu ? 3000 : 1000))
+  }
 }
 
-// Evento para responder automaticamente às mensagens recebidas
 client.on('message', async message => {
   const chatId = message.from
-
   console.log(`📩 Mensagem recebida de ${chatId}: ${message.body}`)
 
-  // Verifica se o bot está ativo e se ninguém está digitando
   if (!botActive || attendantActive[chatId]) {
     console.log(`Bot está pausado para ${chatId}.`)
     return
   }
 
-  // Comandos para ativar e desativar o bot
   if (message.body.toLowerCase() === 'ativar bot') {
     botActive = true
     await simulateTyping(chatId, '🤖 Bot ativado.')
@@ -94,15 +80,12 @@ client.on('message', async message => {
     return
   }
 
-  // Verifica se o número é autorizado
   if (chatId !== allowedNumber) {
     console.log(`Número não autorizado: ${chatId}`)
     return
   }
 
-  // Reinicia o temporizador de inatividade
   resetInactivityTimer(chatId)
-
   if (!conversationState[chatId]) {
     conversationState[chatId] = 'initial'
     sendMainMenu(chatId)
@@ -111,7 +94,6 @@ client.on('message', async message => {
   }
 })
 
-// Lógica do fluxo de conversa
 function handleUserResponse(chatId, userMessage) {
   switch (conversationState[chatId]) {
     case 'initial':
@@ -126,14 +108,14 @@ function handleUserResponse(chatId, userMessage) {
     case 'prices':
       handlePricesResponse(chatId, userMessage)
       break
-    case 'other':
-      handleOtherResponse(chatId)
-      break
     case 'price_options':
       handlePriceOptionsResponse(chatId, userMessage)
       break
     case 'date':
       handleDateResponse(chatId, userMessage)
+      break
+    case 'other':
+      handleOtherResponse(chatId)
       break
     default:
       simulateTyping(
@@ -147,16 +129,16 @@ function handleInitialResponse(chatId, userMessage) {
   switch (userMessage.trim()) {
     case '1':
       conversationState[chatId] = 'info'
-      simulateTyping(
-        chatId,
-        '🏡 A Chácara da Paz conta com 3 quartos e acomodações para 20 pessoas. Quer saber mais sobre a área de lazer?\n1️⃣ Sim\n2️⃣ Não'
-      )
+      simulateTyping(chatId, [
+        '🏡 A Chácara da Paz conta com 3 quartos e acomodações para 20 pessoas.',
+        'Quer saber mais sobre a área de lazer?\n1️⃣ Sim\n2️⃣ Não'
+      ])
       break
-    case '3':
+    case '2':
       conversationState[chatId] = 'prices'
       sendPriceOptions(chatId)
       break
-    case '4':
+    case '3':
       conversationState[chatId] = 'other'
       simulateTyping(
         chatId,
@@ -174,15 +156,11 @@ function handleInitialResponse(chatId, userMessage) {
 function handleInfoResponse(chatId, userMessage) {
   switch (userMessage.trim()) {
     case '1':
-      simulateTyping(
-        chatId,
-        'Contamos com 2 mesas de pebolim, 1 mesa de ping pong, 1 mesa de sinuca, um amplo campo de futebol, playground para crianças, piscina aquecida, espaço gourmet com fogão a lenha, 2 freezers para bebidas, e duas churrasqueiras. Também temos um espaço para festas com iluminação personalizada e sistema de som controlado pela ALEXA. E não podemos esquecer do espaço para fazer fogueira ao ar livre! 🪵🔥'
-      )
-      conversationState[chatId] = 'info_lazer'
-      simulateTyping(
-        chatId,
+      simulateTyping(chatId, [
+        'Contamos com 2 mesas de pebolim, 1 mesa de ping pong, 1 mesa de sinuca, um amplo campo de futebol, playground para crianças, piscina aquecida, espaço gourmet com fogão a lenha, 2 freezers para bebidas, e duas churrasqueiras. Também temos um espaço para festas com iluminação personalizada e sistema de som controlado pela ALEXA. E não podemos esquecer do espaço para fazer fogueira ao ar livre! 🪵🔥',
         'Gostaria de saber mais sobre nossos pacotes de preços?\n1️⃣ Sim\n2️⃣ Não'
-      )
+      ])
+      conversationState[chatId] = 'info_lazer'
       break
     case '2':
       simulateTyping(
@@ -290,7 +268,6 @@ function handleDateResponse(chatId, userMessage) {
       `📆 Vamos verificar a disponibilidade para ${userMessage}. Aguarde nosso retorno.`
     )
     sendToPortal({ chatId, date: userMessage })
-    // Pausa o bot após receber a data
     botActive = false
   } else {
     simulateTyping(chatId, '⚠️ Formato de data inválido. Use dd/mm/yyyy')
@@ -299,14 +276,11 @@ function handleDateResponse(chatId, userMessage) {
 
 function handleOtherResponse(chatId) {
   simulateTyping(chatId, '📨 Obrigado! Nossa equipe responderá em breve.')
-  // Pausa o bot após receber a dúvida
   botActive = false
 }
 
-// Evento para detectar quando um atendente assume a conversa
 client.on('typing', chat => {
   const chatId = chat.id._serialized
-  console.log(`Evento 'typing' disparado para ${chatId}`) // Verificação adicional
   if (chatId) {
     attendantActive[chatId] = true
     console.log(`Atendente começou a digitar em ${chatId}. Bot pausado.`)
@@ -321,10 +295,8 @@ client.on('message_ack', (msg, ack) => {
   }
 })
 
-// Inicializa o cliente do WhatsApp Web
 client.initialize()
 
-// Configuração do servidor Express.js
 const app = express()
 const port = 3000
 
@@ -332,19 +304,16 @@ app.use(express.json())
 
 let requests = []
 
-// Endpoint para receber dados do WhatsApp
 app.post('/api/requests', (req, res) => {
   const request = req.body
   requests.push(request)
   res.status(201).send('Solicitação recebida')
 })
 
-// Endpoint para listar todas as solicitações
 app.get('/api/requests', (req, res) => {
   res.json(requests)
 })
 
-// Rota para servir o arquivo HTML
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'))
 })
@@ -352,3 +321,11 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`)
 })
+
+function sendToPortal(data) {
+  console.log('📡 Enviando dados para o portal:', data)
+  axios
+    .post('http://localhost:3000/api/requests', data)
+    .then(response => console.log('✅ Dados enviados:', response.data))
+    .catch(error => console.error('❌ Erro ao enviar:', error))
+}
