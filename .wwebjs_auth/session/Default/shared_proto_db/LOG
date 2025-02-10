@@ -1,2 +1,3 @@
-2025/02/07-16:41:26.708 7cd4 Creating DB C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\shared_proto_db since it was missing.
-2025/02/07-16:41:26.732 7cd4 Reusing MANIFEST C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\shared_proto_db/MANIFEST-000001
+2025/02/10-09:44:13.297 6970 Reusing MANIFEST C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\shared_proto_db/MANIFEST-000001
+2025/02/10-09:44:13.303 6970 Recovering log #3
+2025/02/10-09:44:13.303 6970 Reusing old log C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\shared_proto_db/000003.log 

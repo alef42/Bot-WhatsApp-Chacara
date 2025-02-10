@@ -30,7 +30,7 @@ function sendMainMenu(chatId) {
 function sendPriceOptions(chatId) {
   simulateTyping(
     chatId,
-    '💰 Tabela de Preços:\n1️⃣ Diárias de Dezembro a Fevereiro\n2️⃣ Diárias de Março a Novembro\n3️⃣ Feriados\n4️⃣ Pacote Carnaval\n5️⃣ Pacote Ano Novo\n6️⃣ 🔙 Voltar ao menu principal',
+    '💰 Tabela de Preços:\nDigite um numero abaixo 👇\n\n1️⃣ Diárias de Dezembro a Fevereiro\n2️⃣ Diárias de Março a Novembro\n3️⃣ Feriados\n4️⃣ Pacote Carnaval\n5️⃣ Pacote Ano Novo\n6️⃣ 🔙 Voltar ao menu principal',
     true
   )
 }
@@ -65,6 +65,12 @@ client.on('message', async message => {
   const chatId = message.from
   console.log(`📩 Mensagem recebida de ${chatId}: ${message.body}`)
 
+  // Verifique se a mensagem é de texto
+  if (message.type !== 'chat') {
+    console.log('Mensagem ignorada: não é uma mensagem de texto.')
+    return
+  }
+
   if (!botActive || attendantActive[chatId]) {
     console.log(`Bot está pausado para ${chatId}.`)
     return
@@ -93,7 +99,6 @@ client.on('message', async message => {
     handleUserResponse(chatId, message.body)
   }
 })
-
 function handleUserResponse(chatId, userMessage) {
   switch (conversationState[chatId]) {
     case 'initial':
@@ -239,7 +244,7 @@ function handlePricesResponse(chatId, userMessage) {
   conversationState[chatId] = 'price_options'
   simulateTyping(
     chatId,
-    'O que você gostaria de fazer agora?\n1️⃣ Verificar disponibilidade de data\n2️⃣ Voltar ao menu principal'
+    'O que você gostaria de fazer agora?\n\nDigite um numero abaixo 👇\n\n1️⃣ Verificar disponibilidade de data\n2️⃣ Voltar ao menu principal'
   )
 }
 

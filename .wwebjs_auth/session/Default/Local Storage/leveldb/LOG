@@ -1,3 +1,6 @@
-2025/02/07-19:36:24.109 68cc Reusing MANIFEST C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
-2025/02/07-19:36:24.110 68cc Recovering log #10
-2025/02/07-19:36:24.111 68cc Reusing old log C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Local Storage\leveldb/000010.log 
+2025/02/10-15:14:16.833 3160 Reusing MANIFEST C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
+2025/02/10-15:14:16.835 3160 Recovering log #16
+2025/02/10-15:14:16.836 3160 Reusing old log C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Local Storage\leveldb/000016.log 
+2025/02/10-15:15:17.629 a0c Level-0 table #21: started
+2025/02/10-15:15:17.644 a0c Level-0 table #21: 16657 bytes OK
+2025/02/10-15:15:17.648 a0c Delete type=0 #16
