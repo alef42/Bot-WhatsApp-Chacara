@@ -59,18 +59,21 @@ function resetInactivityTimer(chatId) {
       'O atendimento foi encerrado. Se precisar de mais alguma coisa, estou aqui para ajudar!'
     )
     sendMainMenu(chatId)
-  }, 30000) // 5 minutos de inatividade
+  }, 300000) // 5 minutos de inatividade
 }
 
 // Função para simular digitação
-async function simulateTyping(chatId, message) {
-  await client.sendPresenceAvailable()
-  await client.sendTyping(chatId)
-  setTimeout(async () => {
+async function simulateTyping(chatId, messages, isMenu = false) {
+  const chat = await client.getChatById(chatId)
+  if (!Array.isArray(messages)) messages = [messages]
+  for (const message of messages) {
+    await chat.sendStateTyping()
+    await new Promise(resolve => setTimeout(resolve, isMenu ? 50000 : 3000))
     await client.sendMessage(chatId, message)
-  }, 2000) // Simula 2 segundos de digitação
+    await chat.clearState()
+    await new Promise(resolve => setTimeout(resolve, isMenu ? 20000 : 3000))
+  }
 }
-
 // Evento para responder automaticamente às mensagens recebidas
 client.on('message', async message => {
   const chatId = message.from
