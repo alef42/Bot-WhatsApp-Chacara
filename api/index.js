@@ -29,7 +29,7 @@ let inactivityTimers = {} // Armazena os temporizadores de inatividade
 // Função para enviar o menu principal
 function sendMainMenu(chatId) {
   const options =
-    '🌿 Bem-vindo à Chácara da Paz! 🌞🍃\nComo posso ajudar hoje?\n\n1️⃣ Informações sobre a chácara\n3️⃣ Preços e pacotes\n4️⃣ Outras dúvidas'
+    '🌿 Bem-vindo à Chácara da Paz! 🌞🍃\nComo posso ajudar hoje?\n\n1️⃣ Informações sobre a chácara\n2️⃣ Preços e pacotes\n3️⃣ Outras dúvidas'
   client.sendMessage(chatId, options)
 }
 
@@ -64,7 +64,7 @@ function resetInactivityTimer(chatId) {
       'O atendimento foi encerrado. Se precisar de mais alguma coisa, estou aqui para ajudar!'
     )
     sendMainMenu(chatId)
-  }, 300000) // 5 minutos de inatividade
+  }, 800000) // 5 minutos de inatividade
 }
 
 // Função para simular digitação
@@ -160,11 +160,11 @@ function handleInitialResponse(chatId, userMessage) {
         '🏡 A Chácara da Paz conta com 3 quartos e acomodações para 20 pessoas. Quer saber mais sobre a área de lazer?\n1️⃣ Sim\n2️⃣ Não'
       )
       break
-    case '3':
+    case '2':
       conversationState[chatId] = 'prices'
       sendPriceOptions(chatId)
       break
-    case '4':
+    case '3':
       conversationState[chatId] = 'other'
       simulateTyping(
         chatId,
@@ -295,7 +295,7 @@ function handleDateResponse(chatId, userMessage) {
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(userMessage.trim())) {
     simulateTyping(
       chatId,
-      `📆 Vamos verificar a disponibilidade para ${userMessage}. Aguarde nosso retorno.`
+      '📆 Vamos verificar a disponibilidade para ${userMessage}. Aguarde nosso retorno.'
     )
     sendToPortal({ chatId, date: userMessage })
     // Pausa o bot após receber a data
