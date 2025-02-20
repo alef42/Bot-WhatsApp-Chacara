@@ -95,10 +95,10 @@ client.on('message', async message => {
   }
 
   // Verifica se o número é autorizado
-  if (chatId !== allowedNumber) {
-    console.log(`Número não autorizado: ${chatId}`)
-    return
-  }
+  //if (chatId !== allowedNumber) {
+  //console.log(`Número não autorizado: ${chatId}`)
+  // return
+  //}
 
   // Reinicia o temporizador de inatividade
   resetInactivityTimer(chatId)
