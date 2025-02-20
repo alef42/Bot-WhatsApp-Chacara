@@ -5,7 +5,12 @@ const path = require('path')
 const axios = require('axios')
 
 // Instância do cliente WhatsApp com autenticação local
-const client = new Client({ authStrategy: new LocalAuth() })
+const client = new Client({
+  authStrategy: new LocalAuth(),
+  puppeteer: {
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  }
+})
 
 client.on('qr', qr => qrcode.generate(qr, { small: true }))
 client.on('ready', () => console.log('✅ WhatsApp Web conectado!'))
