@@ -64,7 +64,7 @@ function resetInactivityTimer(chatId) {
       'O atendimento foi encerrado. Se precisar de mais alguma coisa, estou aqui para ajudar!'
     )
     sendMainMenu(chatId)
-  }, 800000) // 5 minutos de inatividade
+  }, 1000000) // 5 minutos de inatividade
 }
 
 // Função para simular digitação
@@ -104,7 +104,7 @@ client.on('message', async message => {
 
   // Verifica se o número é autorizado
   //if (chatId !== allowedNumber) {
-  //console.log(`Número não autorizado: ${chatId}`)
+  // console.log(`Número não autorizado: ${chatId}`)
   // return
   //}
 
@@ -295,7 +295,7 @@ function handleDateResponse(chatId, userMessage) {
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(userMessage.trim())) {
     simulateTyping(
       chatId,
-      '📆 Vamos verificar a disponibilidade para ${userMessage}. Aguarde nosso retorno.'
+      '📆 Vamos verificar a disponibilidade, Aguarde nosso retorno.'
     )
     sendToPortal({ chatId, date: userMessage })
     // Pausa o bot após receber a data
@@ -321,9 +321,10 @@ client.on('typing', chat => {
   }
 })
 
+//aqui é onde adicionda o " chatId === allowedNumber "
 client.on('message_ack', (msg, ack) => {
   const chatId = msg.from
-  if (ack === 3 && chatId === allowedNumber) {
+  if (ack === 3 && chatId) {
     attendantActive[chatId] = true
     console.log(`Mensagem lida em ${chatId}. Bot pausado.`)
   }
