@@ -1,3 +1,9 @@
+<<<<<<< HEAD
 2025/02/10-15:14:17.609 3160 Reusing MANIFEST C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Session Storage/MANIFEST-000001
 2025/02/10-15:14:17.610 3160 Recovering log #3
 2025/02/10-15:14:17.610 3160 Reusing old log C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Session Storage/000003.log 
+=======
+2025/03/14-14:18:45.686 71c4 Reusing MANIFEST C:\Users\alef.santos\Downloads\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Session Storage/MANIFEST-000001
+2025/03/14-14:18:45.687 71c4 Recovering log #3
+2025/03/14-14:18:45.687 71c4 Reusing old log C:\Users\alef.santos\Downloads\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Session Storage/000003.log 
+>>>>>>> main
