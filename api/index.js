@@ -21,7 +21,8 @@ client.on('auth_failure', msg =>
 
 // Variáveis de controle
 let conversationState = {}
-let botActive = true // Estado do bot
+let botActivePerUser = {} // Estado do bot por usuário
+
 const allowedNumber = '5511941093985@c.us' // Número autorizado
 let attendantActive = {} // Inicializa o objeto
 let inactivityTimers = {} // Armazena os temporizadores de inatividade
@@ -86,7 +87,7 @@ client.on('message', async message => {
   console.log(`📩 Mensagem recebida de ${chatId}: ${message.body}`)
 
   // Verifica se o bot está ativo e se ninguém está digitando
-  if (!botActive || attendantActive[chatId]) {
+  if (botActivePerUser[chatId] === false || attendantActive[chatId]) {
     console.log(`Bot está pausado para ${chatId}.`)
     return
   }
@@ -97,7 +98,7 @@ client.on('message', async message => {
     await simulateTyping(chatId, '🤖 Bot ativado.')
     return
   } else if (message.body.toLowerCase() === 'desativar bot') {
-    botActive = false
+    botActivePerUser[chatId] = false
     await simulateTyping(chatId, '🤖 Bot desativado.')
     return
   }
@@ -298,17 +299,18 @@ function handleDateResponse(chatId, userMessage) {
       '📆 Vamos verificar a disponibilidade, Aguarde nosso retorno.'
     )
     sendToPortal({ chatId, date: userMessage })
-    // Pausa o bot após receber a data
-    botActive = false
+
+    // Pausa o bot APENAS para o usuário que enviou a data
+    botActivePerUser[chatId] = false
   } else {
-    simulateTyping(chatId, '⚠️ Formato de data inválido. Use dd/mm/yyyy')
+    simulateTyping(chatId, '⚠ Formato de data inválido. Use dd/mm/yyyy')
   }
 }
 
 function handleOtherResponse(chatId) {
   simulateTyping(chatId, '📨 Obrigado! Nossa equipe responderá em breve.')
   // Pausa o bot após receber a dúvida
-  botActive = false
+  botActivePerUser[chatId] = false
 }
 
 // Evento para detectar quando um atendente assume a conversa
