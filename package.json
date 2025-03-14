@@ -1,9 +1,8 @@
 {
-<<<<<<< HEAD
     "name": "meu-projeto",
     "version": "1.0.0",
     "main": "index.js",
-    "scripts": {
+   "scripts": {
         "start": "node index.js"
     },
     "dependencies": {
@@ -18,22 +17,5 @@
         "qrcode-terminal": "^0.12.0",
         "whatsapp-web.js": "^1.26.0"
     }
-=======
-  "scripts": {
-    "start": "node api/index.js"
-  },
-
-  "dependencies": {
-    "@adiwajshing/baileys": "^5.0.0",
-    "@whiskeysockets/baileys": "^6.7.9",
-    "express": "^4.21.2",
-    "fix": "^0.0.3",
-    "fs-extra": "^11.3.0",
-    "moment": "^2.30.1",
-    "punycode": "^2.3.1",
-    "puppeteer": "^24.1.1",
-    "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "^1.26.0"
-  }
->>>>>>> main
 }
+ 

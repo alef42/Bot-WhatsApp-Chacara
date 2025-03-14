@@ -1,9 +1,2 @@
-<<<<<<< HEAD
-2025/02/10-15:08:14.827 6c50 Reusing MANIFEST C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
-2025/02/10-15:08:14.829 6c50 Recovering log #16
-2025/02/10-15:08:14.830 6c50 Reusing old log C:\Users\alef.santos\Downloads\BOT-WHATSAP-NODE\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Local Storage\leveldb/000016.log 
-=======
-2025/03/14-14:15:30.895 6538 Reusing MANIFEST C:\Users\alef.santos\Downloads\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
-2025/03/14-14:15:30.896 6538 Recovering log #3
-2025/03/14-14:15:30.898 6538 Reusing old log C:\Users\alef.santos\Downloads\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Local Storage\leveldb/000003.log 
->>>>>>> main
+2025/03/14-15:03:11.015 51cc Creating DB C:\Users\alef.santos\Downloads\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Local Storage\leveldb since it was missing.
+2025/03/14-15:03:11.038 51cc Reusing MANIFEST C:\Users\alef.santos\Downloads\Bot-WhatsApp-Chacara\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
