@@ -113,6 +113,7 @@ module.exports = async () => {
 
     const write = async (key, data) => {
         try {
+            // console.log(`💾 Saving auth data: ${key}`); // Verbose debug
             await AuthModel.findByIdAndUpdate(
                 key, 
                 { _id: key, data: JSON.parse(JSON.stringify(data, BufferJSON.replacer)) },
@@ -124,7 +125,10 @@ module.exports = async () => {
     };
     
     const remove = async (key) => {
-        try { await AuthModel.findByIdAndDelete(key); } 
+        try { 
+            console.log(`🗑️ Removing auth data: ${key}`);
+            await AuthModel.findByIdAndDelete(key); 
+        } 
         catch(e) { console.error('Mongo Remove Error:', e); }
     };
 
