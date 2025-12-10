@@ -27,9 +27,11 @@ async function initializeServices() {
         console.log('✅ Configurações carregadas com sucesso!');
 
         // Conectar ao MongoDB se houver URI (Produção)
-        if (process.env.MONGO_URI) {
+        let mongoUri = process.env.MONGO_URI;
+        if (mongoUri) {
+            mongoUri = mongoUri.trim().replace(/^"|"$/g, ''); // Limpa aspas e espaços
             console.log('🔄 Conectando ao MongoDB...');
-            await mongoose.connect(process.env.MONGO_URI);
+            await mongoose.connect(mongoUri);
             console.log('✅ Conectado ao MongoDB!');
         } else {
             console.log('⚠️ MONGO_URI não definido. Usando LocalAuth (apenas dev).');
