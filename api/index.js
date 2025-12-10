@@ -85,6 +85,7 @@ process.on('unhandledRejection', (reason, promise) => {
 // Instância do cliente WhatsApp com autenticação local
 const client = new Client({
   authStrategy: new LocalAuth(),
+  authTimeoutMs: 60000, // Aumenta tempo para ler o QR Code (lento no Render)
   puppeteer: {
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     args: [
@@ -94,7 +95,7 @@ const client = new Client({
       '--disable-accelerated-2d-canvas',
       '--no-first-run',
       '--no-zygote',
-      '--single-process', 
+      // '--single-process', // Removido por instabilidade
       '--disable-gpu'
     ],
     headless: true
