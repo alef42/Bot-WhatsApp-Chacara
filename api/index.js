@@ -118,6 +118,23 @@ client.on('ready', () => {
 
 client.on('authenticated', () => {
     console.log('🔑 Autenticado com sucesso!');
+});
+
+client.on('disconnected', async (reason) => {
+    console.log('❌ Cliente desconectado:', reason);
+    isConnected = false;
+    currentQrCode = null;
+    
+    // Destrói e Recria para garantir limpeza do processo do Chrome
+    try {
+        await client.destroy();
+    } catch (e) {
+        console.error('Erro ao destruir cliente:', e);
+    }
+    
+    console.log('🔄 Tentando reconectar automaticamente...');
+    client.initialize();
+});
     isConnected = true;
     currentQrCode = null;
 });
