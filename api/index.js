@@ -80,14 +80,16 @@ async function startBot() {
     let saveCreds;
     
     try {
-        if (mongoose.connection.readyState === 1) {
+        // FIXME: Debugging mode - Force Local Auth to test stability
+        // if (mongoose.connection.readyState === 1) {
+        if (false) { 
             console.log('🔐 Usando MongoDB Auth...');
             const auth = await useMongoAuthState();
             authState = auth.state;
             saveCreds = auth.saveCreds;
         } else {
              // Fallback para arquivo local (Apenas Dev)
-             console.log('📂 Usando Arquivo Local Auth (auth_info_baileys)...');
+             console.log('📂 Usando Arquivo Local Auth (auth_info_baileys) - DEBUG MODE...');
              const { state, saveCreds: save } = await useMultiFileAuthState('auth_info_baileys')
              authState = state;
              saveCreds = save;
