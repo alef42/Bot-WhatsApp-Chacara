@@ -29,8 +29,13 @@ async function initializeServices() {
         // Conectar ao MongoDB se houver URI (Produção)
         let mongoUri = process.env.MONGO_URI;
         if (mongoUri) {
-            mongoUri = mongoUri.trim().replace(/^"|"$/g, ''); // Limpa aspas e espaços
-            console.log('🔄 Conectando ao MongoDB...');
+            // Limpeza robusta: remove aspas simples/duplas no início/fim e espaços
+            mongoUri = mongoUri.replace(/^['"]|['"]$/g, '').trim(); 
+            
+            // Log de segurança para debug (mostra apenas o início)
+            const uriLog = mongoUri.length > 20 ? mongoUri.substring(0, 15) + '...' : '***';
+            console.log(`🔄 Conectando ao MongoDB com URI: ${uriLog}`);
+
             await mongoose.connect(mongoUri);
             console.log('✅ Conectado ao MongoDB!');
         } else {
@@ -39,6 +44,7 @@ async function initializeServices() {
 
     } catch (error) {
         console.error('❌ Erro fatal na inicialização:', error);
+        throw error; // Re-lança o erro para ser capturado no startBot
     }
 }
 
@@ -48,12 +54,26 @@ let isConnected = false;
 
 // Inicializa o Client APÓS conectar ao banco (se necessário)
 async function startBot() {
-    await initializeServices();
+    try {
+        await initializeServices();
+    } catch (error) {
+        console.error('🛑 Encerrando processo devido a erro na inicialização.');
+        process.exit(1);
+    }
 
     console.log('🚀 Iniciando Bot WhatsApp...');
 
     let authStrategy;
-    if (process.env.MONGO_URI) {
+    // Usa a mesma lógica de limpeza para decidir qual auth usar
+    let mongoUri = process.env.MONGO_URI ? process.env.MONGO_URI.replace(/^['"]|['"]$/g, '').trim() : null;
+
+    if (mongoUri) {
+        // Verifica se mongoose está realmente conectado antes de criar store
+        if (mongoose.connection.readyState !== 1) {
+             console.error('❌ ERRO CRÍTICO: Mongoose não está conectado. Abortando MongoStore.');
+             process.exit(1);
+        }
+
         const store = new MongoStore({ mongoose: mongoose });
         authStrategy = new RemoteAuth({
             store: store,
