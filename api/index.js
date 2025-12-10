@@ -3,108 +3,18 @@ const {
     DisconnectReason, 
     useMultiFileAuthState,
     fetchLatestBaileysVersion,
-    makeInMemoryStore
+    makeInMemoryStore,
+    makeCacheableSignalKeyStore
 } = require('@whiskeysockets/baileys')
-const { Boom } = require('@hapi/boom')
-const mongoose = require('mongoose');
-const qrcode = require('qrcode-terminal')
-const express = require('express')
-const path = require('path')
-const axios = require('axios')
-const cors = require('cors')
-const { GoogleGenerativeAI } = require('@google/generative-ai')
-const fs = require('fs');
-
-// Services
-const { checkUpcomingReservations, checkAvailability } = require('./services/reservationService');
-const configService = require('./services/configService');
-const scheduleService = require('./services/scheduleService');
-const useMongoAuthState = require('./services/baileysMongoAuth'); // Nosso adaptador customizado
-const moment = require('moment');
-
-// Variáveis Globais
-let sock;
-let currentQrCode = null;
-let isConnected = false;
-let botConfig = {};
-let monitorConfig = {};
-let schedules = [];
-
-// Armazenamento em memória para dados de chats/contatos (opcional, mas bom pra performance)
-const store = makeInMemoryStore({ })
-// store.readFromFile('./baileys_store_multi.json') // Opcional salvar em arquivo
-// setInterval(() => {
-//     store.writeToFile('./baileys_store_multi.json')
-// }, 10_000)
-
-// Inicialização de Serviços e DB
-async function initializeServices() {
-    try {
-        console.log('🔄 Carregando configurações...');
-        
-        // Conectar ao MongoDB (Obrigatório para Baileys no Render)
-        let mongoUri = process.env.MONGO_URI;
-        if (mongoUri) {
-            mongoUri = mongoUri.replace(/^['"]|['"]$/g, '').trim(); 
-            const uriLog = mongoUri.length > 20 ? mongoUri.substring(0, 15) + '...' : '***';
-            console.log(`🔄 Conectando ao MongoDB com URI: ${uriLog}`);
-            
-            if (mongoose.connection.readyState !== 1) {
-                await mongoose.connect(mongoUri);
-                console.log('✅ Conectado ao MongoDB!');
-            }
-        } else {
-            console.log('⚠️ MONGO_URI não definido. Sessão não persistirá no Render!');
-            // Em dev local, sem mongo, vai falhar o auth adapter, teríamos que usar useMultiFileAuthState
-            // Mas vamos assumir que TEM mongo ou o usuário configurou
-        }
-
-        botConfig = await configService.getGeneralConfig();
-        monitorConfig = await configService.getMonitorConfig();
-        schedules = await scheduleService.getAllSchedules();
-        console.log('✅ Serviços inicializados!');
-
-    } catch (error) {
-        console.error('❌ Erro fatal na inicialização:', error);
-        process.exit(1);
-    }
-}
-
-async function startBot() {
-    await initializeServices();
-
-    console.log('🚀 Iniciando Bot WhatsApp (Baileys)...');
-    
-    // Auth Strategy
-    let authState;
-    let saveCreds;
-    
-    try {
-        // FIXME: Debugging mode - Force Local Auth to test stability
-        // if (mongoose.connection.readyState === 1) {
-        if (false) { 
-            console.log('🔐 Usando MongoDB Auth...');
-            const auth = await useMongoAuthState();
-            authState = auth.state;
-            saveCreds = auth.saveCreds;
-        } else {
-             // Fallback para arquivo local (Apenas Dev)
-             console.log('📂 Usando Arquivo Local Auth (auth_info_baileys) - DEBUG MODE...');
-             const { state, saveCreds: save } = await useMultiFileAuthState('auth_info_baileys')
-             authState = state;
-             saveCreds = save;
-        }
-    } catch (e) {
-        console.error('Erro ao carregar Auth:', e);
-        process.exit(1);
-    }
-
-    const { version, isLatest } = await fetchLatestBaileysVersion()
-    console.log(`Usando WhatsApp v${version.join('.')}, isLatest: ${isLatest}`)
+// ... (lines skipped)
 
     sock = makeWASocket({
         version,
-        auth: authState,
+        auth: {
+            creds: authState.creds,
+            // Wrap keys com Cache Layer para evitar timeout no Mongo
+            keys: makeCacheableSignalKeyStore(authState.keys, require('pino')({ level: 'silent' }))
+        },
         printQRInTerminal: false, // Vamos imprimir manualmente para capturar a string
         mobile: false,
         logger: require('pino')({ level: 'silent' }), // Log silencioso para não poluir
