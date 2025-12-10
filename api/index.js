@@ -134,6 +134,30 @@ async function startBot() {
         console.log('🔄 Estado da conexão alterado:', state);
     });
 
+    // Evento para detectar mensagens enviadas (incluindo as do humano)
+    client.on('message_create', async (msg) => {
+        if (msg.fromMe) {
+            // Aguarda um pouco para garantir que o ID foi adicionado ao Set se foi o bot
+            await new Promise(resolve => setTimeout(resolve, 500));
+            // Verifica no Set do próprio cliente
+            if (client.botMessages && client.botMessages.has(msg.id._serialized)) {
+                console.log('🤖 Mensagem do bot ignorada (loop prevention).');
+                return;
+            }
+            // Se for mensagem de um humano real (via WhatsApp Web/Celular), tratamos como comando
+            console.log('👤 Mensagem enviada por humano (admin):', msg.body);
+        }
+    });
+
+    // Evento para detectar quando um atendente assume a conversa (DIGITANDO)
+    client.on('typing', chat => {
+        const chatId = chat.id._serialized
+        if (chatId) {
+            attendantActive[chatId] = true
+            console.log(`Atendente começou a digitar em ${chatId}. Bot pausado.`)
+        }
+    })
+
     // Inicializa
     client.initialize();
 }
@@ -180,22 +204,7 @@ function setupMessageTracking(clientInstance) {
     clientInstance.botMessages = botMessages;
 }
 
-// Evento para detectar mensagens enviadas (incluindo as do humano)
-client.on('message_create', async (msg) => {
-    if (msg.fromMe) {
-        // Aguarda um pouco para garantir que o ID foi adicionado ao Set se foi o bot
-        setTimeout(() => {
-            if (!botMessages.has(msg.id._serialized)) {
-                const chatId = msg.to; // Para mensagens enviadas, 'to' é o destinatário
-                if (!attendantActive[chatId]) {
-                    attendantActive[chatId] = true;
-                    console.log(`👨‍💻 Atendente respondeu em ${chatId}. Bot pausado.`);
-                }
-                resetAttendantInactivityTimer(chatId); // Reinicia o timer de 20 min
-            }
-        }, 2000);
-    }
-});
+// Evento movido para startBot
 
 // Função para enviar o menu principal
 function sendMainMenu(chatId) {
@@ -593,15 +602,7 @@ async function handleAIResponse(chatId, userMessage) {
   }
 }
 
-// Evento para detectar quando um atendente assume a conversa (DIGITANDO)
-client.on('typing', chat => {
-  const chatId = chat.id._serialized
-  // console.log(`Evento 'typing' disparado para ${chatId}`)
-  if (chatId) {
-    attendantActive[chatId] = true
-    console.log(`Atendente começou a digitar em ${chatId}. Bot pausado.`)
-  }
-})
+// Evento movido para startBot
 
 /* REMOVIDO: Causava pausa indesejada apenas ao visualizar a mensagem
 client.on('message_ack', (msg, ack) => {
