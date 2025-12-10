@@ -41,6 +41,8 @@ async function initializeServices() {
 }
 
 let client;
+let currentQrCode = null;
+let isConnected = false;
 
 // Inicializa o Client APÓS conectar ao banco (se necessário)
 async function startBot() {
@@ -82,8 +84,8 @@ async function startBot() {
     // Configura o rastreamento de mensagens (Monkey Patch)
     setupMessageTracking(client);
 
-    let currentQrCode = null;
-    let isConnected = false;
+    currentQrCode = null;
+    isConnected = false;
 
     // ... Eventos do Client ...
     client.on('qr', qr => {
