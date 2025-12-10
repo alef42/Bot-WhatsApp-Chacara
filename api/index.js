@@ -79,6 +79,9 @@ async function startBot() {
         }
     });
 
+    // Configura o rastreamento de mensagens (Monkey Patch)
+    setupMessageTracking(client);
+
     let currentQrCode = null;
     let isConnected = false;
 
@@ -159,20 +162,23 @@ function resetAttendantInactivityTimer(chatId) {
   }, 20 * 60 * 1000) // 20 minutos
 }
 
-// Conjunto para armazenar IDs de mensagens enviadas pelo bot
-const botMessages = new Set();
+// Função auxiliar para inicializar o Monkey Patch (Rastreamento de Mensagens)
+function setupMessageTracking(clientInstance) {
+    const botMessages = new Set();
+    const originalSendMessage = clientInstance.sendMessage.bind(clientInstance);
 
-// Monkey-patch no método sendMessage para rastrear mensagens do bot
-const originalSendMessage = client.sendMessage.bind(client);
-client.sendMessage = async (chatId, content, options) => {
-    const msg = await originalSendMessage(chatId, content, options);
-    if (msg && msg.id) {
-        botMessages.add(msg.id._serialized);
-        // Limpeza simples para evitar vazamento de memória (opcional, remove após 10 min)
-        setTimeout(() => botMessages.delete(msg.id._serialized), 600000);
-    }
-    return msg;
-};
+    clientInstance.sendMessage = async (chatId, content, options) => {
+        const msg = await originalSendMessage(chatId, content, options);
+        if (msg && msg.id) {
+            botMessages.add(msg.id._serialized);
+            // Limpeza simples para evitar vazamento de memória
+            setTimeout(() => botMessages.delete(msg.id._serialized), 600000);
+        }
+        return msg;
+    };
+    // Exporta o Set para uso global se necessário, ou anexa ao cliente
+    clientInstance.botMessages = botMessages;
+}
 
 // Evento para detectar mensagens enviadas (incluindo as do humano)
 client.on('message_create', async (msg) => {
