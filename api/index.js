@@ -789,6 +789,36 @@ app.post('/api/monitor-run', async (req, res) => {
     runReservationCheck();
 });
 
+// --- FUNÇÃO DE MONITORAMENTO ---
+async function runReservationCheck() {
+    if (!client.info || !monitorConfig.enabled) return;
+
+    console.log('🔍 Executando verificação de reservas...');
+    const alerts = await checkUpcomingReservations();
+
+    if (alerts.length > 0 && monitorConfig.recipients.length > 0) {
+        for (const alert of alerts) {
+            for (const recipient of monitorConfig.recipients) {
+                try {
+                    // Formata número para ID do WhatsApp (5511999999999@c.us)
+                    const chatId = recipient.replace(/\D/g, '') + '@c.us';
+                    await client.sendMessage(chatId, alert.message);
+                } catch (error) {
+                    console.error(`Erro ao enviar alerta para ${recipient}:`, error);
+                }
+            }
+        }
+    }
+}
+
+// Configura o intervalo de verificação (ex: a cada minuto verifica se deu o horário)
+setInterval(() => {
+    const now = moment().format('HH:mm');
+    if (monitorConfig.enabled && now === monitorConfig.checkTime) {
+         runReservationCheck();
+    }
+}, 60000); 
+
 // Rota para servir o arquivo HTML
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'))
