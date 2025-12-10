@@ -117,9 +117,13 @@ async function startBot() {
         printQRInTerminal: false,
         mobile: false,
         logger: require('pino')({ level: 'silent' }),
+        browser: ['Chacara Bot', 'Render', '3.0.0'], // Assinatura única para evitar conflito
         generateHighQualityLinkPreview: true,
         syncFullHistory: false,
-        retryRequestDelayMs: 5000, // Delay extra para evitar erros de 515/Stream Error
+        retryRequestDelayMs: 5000,
+        keepAliveIntervalMs: 10000, // Ping a cada 10s
+        defaultQueryTimeoutMs: 60000, // Timeout maior para queries
+        connectTimeoutMs: 60000,
     })
 
     store.bind(sock.ev)
