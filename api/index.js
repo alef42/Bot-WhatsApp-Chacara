@@ -140,17 +140,26 @@ async function startBot() {
         if(connection === 'close') {
             const error = lastDisconnect.error;
             const statusCode = error?.output?.statusCode;
-            console.log('❌ Conexão fechada. Status:', statusCode, 'Erro:', error);
+            const isConflict = error?.output?.payload?.message?.includes('conflict') || 
+                             error?.message?.includes('conflict') ||
+                             error?.message?.includes('Connection Failure');
 
-            const shouldReconnect = statusCode !== DisconnectReason.loggedOut
+            console.log('❌ Conexão fechada. Status:', statusCode, 'Erro:', error?.message);
+
+            // Se for 401 (loggedOut) mas for CONFLICT ou Failure temporária, tentamos reconectar
+            // Se for 401 (loggedOut) genuíno (scanear de novo), aí paramos
+            const shouldReconnect = (statusCode !== DisconnectReason.loggedOut) || isConflict;
+            
+            console.log('🤔 Deve reconectar?', shouldReconnect);
 
             isConnected = false;
             currentQrCode = null;
             
             if(shouldReconnect) {
-                startBot() // Reconecta recursivamente
+                // Delay para evitar loop frenético em caso de conflito
+                setTimeout(() => startBot(), isConflict ? 2000 : 0);
             } else {
-                console.log('🔴 Deslogado. Apague a sessão no banco para scanear de novo.')
+                console.log('🔴 Deslogado Permanentemente. Apague a sessão no banco para scanear de novo.')
             }
         } else if(connection === 'open') {
             console.log('✅ WhatsApp Conectado!')
