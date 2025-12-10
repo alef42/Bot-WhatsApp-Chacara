@@ -158,6 +158,87 @@ async function startBot() {
         }
     })
 
+    // Evento para responder automaticamente às mensagens recebidas
+    client.on('message', async message => {
+      const chatId = message.from
+
+      // Ignora atualizações de status
+      if (chatId === 'status@broadcast' || message.isStatus) return;
+
+      // --- COMANDOS ESPECIAIS MANUAIS ---
+      if (message.body === '!grupos') {
+        const chats = await client.getChats();
+        const groups = chats.filter(chat => chat.isGroup);
+        if (groups.length === 0) {
+            await client.sendMessage(chatId, 'Não encontrei nenhum grupo.');
+        } else {
+            let msg = '*Grupos Encontrados:*\n\n';
+            groups.forEach(g => {
+                msg += `Nome: ${g.name}\nID: ${g.id._serialized}\n\n`;
+            });
+            await client.sendMessage(chatId, msg);
+        }
+        return;
+      }
+
+      // Debug: Forçar verificação de reservas
+      if (message.body === '!check') {
+          await client.sendMessage(chatId, '🔎 Rodando verificação manual de reservas...');
+          await runReservationCheck();
+          return;
+      }
+      
+      // Log para debug
+      console.log(`📩 Mensagem recebida de ${chatId}: ${message.body}`)
+
+        // --- CONTROLE DE ACESSO ---
+        // 1. Verifica se está em modo de teste
+        if (botConfig.testMode) {
+            // Se estiver em modo teste, SÓ responde aos números permitidos
+            // Normaliza o ID para verificar apenas o número se necessário, ou ID completo
+            const isAllowed = botConfig.allowedNumbers && botConfig.allowedNumbers.some(num => chatId.includes(num));
+            if (!isAllowed) {
+                console.log(`⛔ Bloqueado pelo Modo Teste: ${chatId}`);
+                return; // Ignora silenciosamente
+            }
+        }
+
+        // 2. Verifica se o número está bloqueado explicitly
+        if (botConfig.blockedNumbers && botConfig.blockedNumbers.some(num => chatId.includes(num))) {
+            console.log(`🚫 Número bloqueado: ${chatId}`);
+            return; // Ignora silenciosamente
+        }
+
+        // Verifica se o bot está ativo e se ninguém está digitando
+        if (botActivePerUser[chatId] === false || attendantActive[chatId]) {
+        console.log(`Bot está pausado para ${chatId}.`)
+        if (attendantActive[chatId]) {
+            resetAttendantInactivityTimer(chatId);
+        }
+        return
+      }
+
+      // Comandos para ativar e desativar o bot
+      if (message.body.toLowerCase() === 'ativar bot') {
+        botActivePerUser[chatId] = true
+        await simulateTyping(chatId, '🤖 Bot ativado.')
+        return
+      } else if (message.body.toLowerCase() === 'desativar bot') {
+        botActivePerUser[chatId] = false
+        await simulateTyping(chatId, '🤖 Bot desativado.')
+        return
+      }
+
+      resetInactivityTimer(chatId)
+
+      if (!conversationState[chatId]) {
+        conversationState[chatId] = 'initial'
+        sendMainMenu(chatId)
+      } else {
+        handleUserResponse(chatId, message.body)
+      }
+    })
+
     // Inicializa
     client.initialize();
 }
@@ -267,91 +348,8 @@ async function simulateTyping(chatId, messages, isMenu = false) {
   }
 }
 
-// Evento para responder automaticamente às mensagens recebidas
-client.on('message', async message => {
-  const chatId = message.from
+// Evento movido para startBot
 
-  // Ignora atualizações de status
-  if (chatId === 'status@broadcast' || message.isStatus) return;
-
-  // --- COMANDOS ESPECIAIS MANUAIS ---
-  if (message.body === '!grupos') {
-    const chats = await client.getChats();
-    const groups = chats.filter(chat => chat.isGroup);
-    if (groups.length === 0) {
-        await client.sendMessage(chatId, 'Não encontrei nenhum grupo.');
-    } else {
-        let msg = '*Grupos Encontrados:*\n\n';
-        groups.forEach(g => {
-            msg += `Nome: ${g.name}\nID: ${g.id._serialized}\n\n`;
-        });
-        await client.sendMessage(chatId, msg);
-    }
-    return;
-  }
-
-  // Debug: Forçar verificação de reservas
-  if (message.body === '!check') {
-      await client.sendMessage(chatId, '🔎 Rodando verificação manual de reservas...');
-      await runReservationCheck();
-      return;
-  }
-  
-  // Log para debug
-  console.log(`📩 Mensagem recebida de ${chatId}: ${message.body}`)
-
-    // --- CONTROLE DE ACESSO ---
-    // 1. Verifica se está em modo de teste
-    if (botConfig.testMode) {
-        // Se estiver em modo teste, SÓ responde aos números permitidos
-        // Normaliza o ID para verificar apenas o número se necessário, ou ID completo
-        const isAllowed = botConfig.allowedNumbers && botConfig.allowedNumbers.some(num => chatId.includes(num));
-        if (!isAllowed) {
-            console.log(`⛔ Bloqueado pelo Modo Teste: ${chatId}`);
-            return; // Ignora silenciosamente
-        }
-    }
-
-    // 2. Verifica se o número está bloqueado explicitly
-    if (botConfig.blockedNumbers && botConfig.blockedNumbers.some(num => chatId.includes(num))) {
-        console.log(`🚫 Número bloqueado: ${chatId}`);
-        return; // Ignora silenciosamente
-    }
-
-    // Verifica se o bot está ativo e se ninguém está digitando
-    if (botActivePerUser[chatId] === false || attendantActive[chatId]) {
-    console.log(`Bot está pausado para ${chatId}.`)
-    if (attendantActive[chatId]) {
-        resetAttendantInactivityTimer(chatId);
-    }
-    return
-  }
-
-  // Comandos para ativar e desativar o bot
-  if (message.body.toLowerCase() === 'ativar bot') {
-    botActivePerUser[chatId] = true
-    await simulateTyping(chatId, '🤖 Bot ativado.')
-    return
-  } else if (message.body.toLowerCase() === 'desativar bot') {
-    botActivePerUser[chatId] = false
-    await simulateTyping(chatId, '🤖 Bot desativado.')
-    return
-  }
-
-  // Verifica se o número é autorizado (Desativado)
-  /* if (chatId !== allowedNumber) {
-    // return
-  } */
-
-  resetInactivityTimer(chatId)
-
-  if (!conversationState[chatId]) {
-    conversationState[chatId] = 'initial'
-    sendMainMenu(chatId)
-  } else {
-    handleUserResponse(chatId, message.body)
-  }
-})
 
 // Lógica do fluxo de conversa
 function handleUserResponse(chatId, userMessage) {
