@@ -135,10 +135,6 @@ client.on('disconnected', async (reason) => {
     console.log('🔄 Tentando reconectar automaticamente...');
     client.initialize();
 });
-    isConnected = true;
-    currentQrCode = null;
-});
-
 client.on('auth_failure', msg => {
     console.error('❌ Falha na autenticação:', msg);
     isConnected = false;
@@ -150,11 +146,6 @@ client.on('loading_screen', (percent, message) => {
 
 client.on('change_state', state => {
     console.log('🔄 Estado da conexão alterado:', state);
-});
-
-client.on('disconnected', (reason) => {
-    console.log('❌ Cliente desconectado:', reason);
-    isConnected = false;
 });
 
 // Variáveis de controle
