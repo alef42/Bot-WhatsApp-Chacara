@@ -114,12 +114,12 @@ async function startBot() {
             creds: authState.creds,
             keys: keysConfig
         },
-        printQRInTerminal: false, // Vamos imprimir manualmente para capturar a string
+        printQRInTerminal: false,
         mobile: false,
-        logger: require('pino')({ level: 'silent' }), // Log silencioso para não poluir
-        // browser: ['Ubuntu', 'Chrome', '20.0.04'], // Removido para usar default do Baileys
+        logger: require('pino')({ level: 'silent' }),
         generateHighQualityLinkPreview: true,
-        syncFullHistory: false, // Evita timeout no sync inicial
+        syncFullHistory: false,
+        retryRequestDelayMs: 5000, // Delay extra para evitar erros de 515/Stream Error
     })
 
     store.bind(sock.ev)
