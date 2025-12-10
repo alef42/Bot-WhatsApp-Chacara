@@ -169,6 +169,7 @@ module.exports = async () => {
             }
         },
         saveCreds: async () => {
+            console.log('💾 Saving CREDS (Critical)...');
             await write('creds', creds);
         }
     };

@@ -106,7 +106,7 @@ async function startBot() {
         printQRInTerminal: false, // Vamos imprimir manualmente para capturar a string
         mobile: false,
         logger: require('pino')({ level: 'silent' }), // Log silencioso para não poluir
-        browser: ['Chácara Bot', 'Chrome', '10.0'], // Nome que aparece no celular
+        browser: ['Ubuntu', 'Chrome', '20.0.04'], // Navegador padrão para compatibilidade
         generateHighQualityLinkPreview: true,
     })
 
