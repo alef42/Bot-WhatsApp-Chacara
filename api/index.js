@@ -613,7 +613,7 @@ client.on('message_ack', (msg, ack) => {
 */
 
 // Inicializa o cliente do WhatsApp Web
-client.initialize()
+// client.initialize() // REMOVIDO: Já é inicializado dentro de startBot()
 
 // Configuração do servidor Express.js
 
