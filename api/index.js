@@ -9,6 +9,7 @@ const fs = require('fs');
 const { checkUpcomingReservations, checkAvailability } = require('./services/reservationService');
 const configService = require('./services/configService');
 const scheduleService = require('./services/scheduleService');
+const moment = require('moment');
 
 // Variáveis Globais de Configuração (Sincronizadas com Firebase)
 let botConfig = { systemPrompt: '', testMode: true, allowedNumbers: [], blockedNumbers: [] };
