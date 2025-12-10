@@ -138,53 +138,6 @@ async function startBot() {
 // Inicia tudo
 startBot();
 
-let currentQrCode = null;
-let isConnected = false;
-
-client.on('qr', qr => {
-    currentQrCode = qr;
-    isConnected = false;
-    qrcode.generate(qr, { small: true });
-});
-
-client.on('ready', () => {
-    console.log('✅ WhatsApp Web conectado!');
-    isConnected = true;
-    currentQrCode = null;
-});
-
-client.on('authenticated', () => {
-    console.log('🔑 Autenticado com sucesso!');
-});
-
-client.on('disconnected', async (reason) => {
-    console.log('❌ Cliente desconectado:', reason);
-    isConnected = false;
-    currentQrCode = null;
-    
-    // Destrói e Recria para garantir limpeza do processo do Chrome
-    try {
-        await client.destroy();
-    } catch (e) {
-        console.error('Erro ao destruir cliente:', e);
-    }
-    
-    console.log('🔄 Tentando reconectar automaticamente...');
-    client.initialize();
-});
-client.on('auth_failure', msg => {
-    console.error('❌ Falha na autenticação:', msg);
-    isConnected = false;
-});
-
-client.on('loading_screen', (percent, message) => {
-    console.log('⏳ Carregando:', percent, '%', message);
-});
-
-client.on('change_state', state => {
-    console.log('🔄 Estado da conexão alterado:', state);
-});
-
 // Variáveis de controle
 let conversationState = {}
 let botActivePerUser = {} // Estado do bot por usuário
