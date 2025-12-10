@@ -1,4 +1,8 @@
-const { Client, LocalAuth } = require('whatsapp-web.js')
+const { Client, LocalAuth, RemoteAuth } = require('whatsapp-web.js');
+const { MongoStore } = require('wwebjs-mongo');
+const mongoose = require('mongoose');
+
+// ... imports anteriores
 const qrcode = require('qrcode-terminal')
 const express = require('express')
 const path = require('path')
@@ -11,12 +15,9 @@ const configService = require('./services/configService');
 const scheduleService = require('./services/scheduleService');
 const moment = require('moment');
 
-// Variáveis Globais de Configuração (Sincronizadas com Firebase)
-let botConfig = { systemPrompt: '', testMode: true, allowedNumbers: [], blockedNumbers: [] };
-let monitorConfig = { enabled: false, recipients: [], checkTime: '08:00' };
-let schedules = [];
+// ... variáveis globais
 
-// Inicialização de Serviços
+// Inicialização de Serviços e DB
 async function initializeServices() {
     try {
         console.log('🔄 Carregando configurações do Firebase...');
@@ -24,83 +25,118 @@ async function initializeServices() {
         monitorConfig = await configService.getMonitorConfig();
         schedules = await scheduleService.getAllSchedules();
         console.log('✅ Configurações carregadas com sucesso!');
+
+        // Conectar ao MongoDB se houver URI (Produção)
+        if (process.env.MONGO_URI) {
+            console.log('🔄 Conectando ao MongoDB...');
+            await mongoose.connect(process.env.MONGO_URI);
+            console.log('✅ Conectado ao MongoDB!');
+        } else {
+            console.log('⚠️ MONGO_URI não definido. Usando LocalAuth (apenas dev).');
+        }
+
     } catch (error) {
-        console.error('❌ Erro fatal ao carregar configurações:', error);
+        console.error('❌ Erro fatal na inicialização:', error);
     }
 }
-initializeServices();
 
-// Configuração do Gemini
-const genAI = new GoogleGenerativeAI('AIzaSyC72sq2nwuy5FgqCIwuFusnY0Ynz_AAlyU')
-const model = genAI.getGenerativeModel({ model: 'models/gemini-flash-latest' })
+let client;
 
-// ... (Resto do código inicial permanece igual até handleAIResponse)
+// Inicializa o Client APÓS conectar ao banco (se necessário)
+async function startBot() {
+    await initializeServices();
 
-async function handleAIResponse(chatId, userMessage) {
-  // 1. Interceptador de Navegação (Palavras-chave)
-  const msg = userMessage.trim().toLowerCase()
-  if (['menu', 'voltar', 'inicio', 'início', 'cancelar', 'oi', 'ola', 'olá'].includes(msg)) {
-      conversationState[chatId] = 'initial'
-      sendMainMenu(chatId)
-      return
-  }
+    console.log('🚀 Iniciando Bot WhatsApp...');
 
-  // Simula digitando para dar feedback imediato
-  simulateTyping(chatId, '')
-
-  try {
-    // Usa o prompt carregado do arquivo JSON, substituindo o placeholder
-    const prompt = botConfig.systemPrompt.replace('${userMessage}', userMessage);
-
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
-
-    await client.sendMessage(chatId, text)
-    
-  } catch (error) {
-    console.error('Erro na IA:', error)
-    if (error.status === 429) {
-        client.sendMessage(chatId, 'Estou recebendo muitas mensagens agora! 🤯 Tente novamente em 1 minuto.')
-    } else if (error.status === 503) {
-        client.sendMessage(chatId, 'Minha conexão com o cérebro (Google) está oscilando um pouco. 📡 Tente perguntar novamente em alguns instantes.')
+    let authStrategy;
+    if (process.env.MONGO_URI) {
+        const store = new MongoStore({ mongoose: mongoose });
+        authStrategy = new RemoteAuth({
+            store: store,
+            backupSyncIntervalMs: 60000 // Salva sessão a cada 1 min
+        });
+        console.log('🔐 Usando RemoteAuth (Database Persistence)');
     } else {
-        client.sendMessage(chatId, 'Desculpe, estou com dificuldade para pensar agora. 🤯 Mas aqui está nosso menu para te ajudar:')
-        sendMainMenu(chatId)
+        authStrategy = new LocalAuth();
+        console.log('📂 Usando LocalAuth (File Persistence)');
     }
-  }
+
+    client = new Client({
+        authStrategy: authStrategy,
+        authTimeoutMs: 60000,
+        puppeteer: {
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-gpu'
+            ],
+            headless: true
+        }
+    });
+
+    let currentQrCode = null;
+    let isConnected = false;
+
+    // ... Eventos do Client ...
+    client.on('qr', qr => {
+        currentQrCode = qr;
+        isConnected = false;
+        qrcode.generate(qr, { small: true });
+        console.log('📸 QR Code gerado! Escaneie para conectar.');
+    });
+
+    client.on('ready', () => {
+        console.log('✅ WhatsApp Web conectado!');
+        isConnected = true;
+        currentQrCode = null;
+    });
+    
+    client.on('remote_session_saved', () => {
+        console.log('💾 Sessão salva no banco de dados!');
+    });
+
+    client.on('authenticated', () => {
+        console.log('🔑 Autenticado com sucesso!');
+    });
+
+    client.on('disconnected', async (reason) => {
+        console.log('❌ Cliente desconectado:', reason);
+        isConnected = false;
+        currentQrCode = null;
+        
+        try {
+           if(client) await client.destroy();
+        } catch (e) { console.error('Erro ao destruir:', e); }
+        
+        console.log('🔄 Tentando reconectar automaticamente...');
+        if(client) client.initialize();
+    });
+    
+    // ... Resto dos eventos ...
+    client.on('auth_failure', msg => {
+        console.error('❌ Falha na autenticação:', msg);
+        isConnected = false;
+    });
+
+    client.on('loading_screen', (percent, message) => {
+        console.log('⏳ Carregando:', percent, '%', message);
+    });
+
+    client.on('change_state', state => {
+        console.log('🔄 Estado da conexão alterado:', state);
+    });
+
+    // Inicializa
+    client.initialize();
 }
 
-// ... (Resto do código)
-
-
-
-process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
-});
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-});
-
-// Instância do cliente WhatsApp com autenticação local
-const client = new Client({
-  authStrategy: new LocalAuth(),
-  authTimeoutMs: 60000, // Aumenta tempo para ler o QR Code (lento no Render)
-  puppeteer: {
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      // '--single-process', // Removido por instabilidade
-      '--disable-gpu'
-    ],
-    headless: true
-  }
-})
+// Inicia tudo
+startBot();
 
 let currentQrCode = null;
 let isConnected = false;
