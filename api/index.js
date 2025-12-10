@@ -6,25 +6,28 @@ const axios = require('axios')
 const cors = require('cors')
 const { GoogleGenerativeAI } = require('@google/generative-ai')
 const fs = require('fs');
+const { checkUpcomingReservations, checkAvailability } = require('./services/reservationService');
+const configService = require('./services/configService');
+const scheduleService = require('./services/scheduleService');
 
-// Carrega configuração inicial
-let botConfig = { systemPrompt: '' };
-const configPath = path.join(__dirname, 'botConfig.json');
+// Variáveis Globais de Configuração (Sincronizadas com Firebase)
+let botConfig = { systemPrompt: '', testMode: true, allowedNumbers: [], blockedNumbers: [] };
+let monitorConfig = { enabled: false, recipients: [], checkTime: '08:00' };
+let schedules = [];
 
-function loadConfig() {
+// Inicialização de Serviços
+async function initializeServices() {
     try {
-        if (fs.existsSync(configPath)) {
-            const data = fs.readFileSync(configPath, 'utf8');
-            botConfig = JSON.parse(data);
-        } else {
-             // Fallback se não existir arquivo (embora tenhamos acabado de criar)
-             console.log("Arquivo de config não encontrado, usando padrão.");
-        }
-    } catch (e) {
-        console.error("Erro ao carregar config:", e);
+        console.log('🔄 Carregando configurações do Firebase...');
+        botConfig = await configService.getGeneralConfig();
+        monitorConfig = await configService.getMonitorConfig();
+        schedules = await scheduleService.getAllSchedules();
+        console.log('✅ Configurações carregadas com sucesso!');
+    } catch (error) {
+        console.error('❌ Erro fatal ao carregar configurações:', error);
     }
 }
-loadConfig();
+initializeServices();
 
 // Configuração do Gemini
 const genAI = new GoogleGenerativeAI('AIzaSyC72sq2nwuy5FgqCIwuFusnY0Ynz_AAlyU')
@@ -82,6 +85,7 @@ process.on('unhandledRejection', (reason, promise) => {
 const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer: {
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -89,7 +93,7 @@ const client = new Client({
       '--disable-accelerated-2d-canvas',
       '--no-first-run',
       '--no-zygote',
-      '--single-process', // <- this one doesn't work in Windows sometimes, but let's try without it first or just standard set.
+      '--single-process', 
       '--disable-gpu'
     ],
     headless: true
@@ -191,7 +195,7 @@ client.on('message_create', async (msg) => {
 // Função para enviar o menu principal
 function sendMainMenu(chatId) {
   const options =
-    '🌿 *Bem-vindo à Chácara da Paz!* 🌞🍃\n\nComo posso ajudar hoje?\n\n1️⃣ *Verificar Disponibilidade e Reservar*\n2️⃣ *Informações da Chácara*\n3️⃣ *Falar com Atendente*\n\n_Digite o número ou o nome da opção._'
+    '🌿 *Bem-vindo à Chácara da Paz!* 🌞🍃\n\nComo posso ajudar hoje?\n\n1️⃣ *Consultar Disponibilidade de Data*\n2️⃣ *Verificar Itens de Lazer*\n3️⃣ *Falar com Atendente*\n\n_Digite o número ou o nome da opção._'
   client.sendMessage(chatId, options)
 }
 
@@ -369,9 +373,9 @@ function handleUserResponse(chatId, userMessage) {
 function handleInitialResponse(chatId, userMessage) {
   const msg = userMessage.trim().toLowerCase()
   
-  if (msg === '1' || msg.includes('preço') || msg.includes('pacote')) {
-      conversationState[chatId] = 'prices'
-      sendPriceOptions(chatId)
+  if (msg === '1' || msg.includes('disponibilidade') || msg.includes('reserva') || msg.includes('data')) {
+      conversationState[chatId] = 'date'
+      simulateTyping(chatId, '📅 Para verificar a disponibilidade, por favor me informe a *data de entrada* desejada.\n\nFormato: *Dia/Mês/Ano* (Ex: 10/12/2024)')
   } else if (msg === '2' || msg.includes('informações') || msg.includes('info') || msg.includes('lazer')) {
       conversationState[chatId] = 'info'
       simulateTyping(
@@ -652,40 +656,46 @@ app.get('/api/prompt', (req, res) => {
 });
 
 // Endpoint para atualizar configuração do bot
-app.post('/api/bot-config', (req, res) => {
+// Endpoint para atualizar configuração do bot
+app.post('/api/bot-config', async (req, res) => {
     const { systemPrompt, testMode, allowedNumbers, blockedNumbers } = req.body;
     
-    // Update config fields if provided
+    // Update local memory
     if (systemPrompt !== undefined) botConfig.systemPrompt = systemPrompt;
     if (testMode !== undefined) botConfig.testMode = testMode;
     if (allowedNumbers !== undefined) botConfig.allowedNumbers = allowedNumbers;
     if (blockedNumbers !== undefined) botConfig.blockedNumbers = blockedNumbers;
 
-    fs.writeFileSync(configPath, JSON.stringify(botConfig, null, 2));
-    console.log('💾 Configuração do bot atualizada:', botConfig);
-    res.json({ success: true, config: botConfig });
+    // Persist to Firebase
+    const success = await configService.updateGeneralConfig(botConfig);
+
+    if (success) {
+        console.log('💾 Configuração Geral salva no Firebase.');
+        res.json({ success: true, config: botConfig });
+    } else {
+        res.status(500).json({ error: 'Falha ao salvar no banco de dados.' });
+    }
 });
 
 // Endpoint para ler configuração do bot
 app.get('/api/bot-config', (req, res) => {
+    // Retorna da memória (que foi carregada na inicialização ou atualizada via POST)
     res.json(botConfig);
 });
 
 // Endpoint para atualizar prompt do sistema
-app.post('/api/update-prompt', (req, res) => {
+app.post('/api/update-prompt', async (req, res) => {
     const { prompt } = req.body;
-    if (!prompt) {
-        return res.status(400).json({ error: 'Prompt é obrigatório.' });
-    }
+    if (!prompt) return res.status(400).json({ error: 'Prompt é obrigatório.' });
     
-    try {
-        botConfig.systemPrompt = prompt;
-        fs.writeFileSync(configPath, JSON.stringify(botConfig, null, 2));
+    botConfig.systemPrompt = prompt;
+    const success = await configService.updateGeneralConfig(botConfig);
+
+    if (success) {
         console.log('📝 Prompt atualizado via API.');
         res.json({ message: 'Prompt atualizado com sucesso.' });
-    } catch (error) {
-        console.error('Erro ao salvar prompt:', error);
-        res.status(500).json({ error: 'Falha ao salvar prompt.' });
+    } else {
+         res.status(500).json({ error: 'Falha ao salvar prompt.' });
     }
 });
 
@@ -719,148 +729,59 @@ app.post('/api/unpause', async (req, res) => {
 });
 
 // --- AGENDAMENTO DE MENSAGENS E MONITORAMENTO ---
-const schedulesPath = path.join(__dirname, 'schedules.json');
-const monitorConfigPath = path.join(__dirname, 'monitorConfig.json');
-
-let schedules = [];
-// Configuração Padrão
-let monitorConfig = {
-    enabled: false,
-    recipients: [], // Array de IDs (123@g.us, 5511@c.us)
-    checkTime: '08:00'
-};
-
-// Importar serviço de reservas
-const { checkUpcomingReservations, checkAvailability } = require('./services/reservationService');
-
-function loadData() {
-    try {
-        if (fs.existsSync(schedulesPath)) schedules = JSON.parse(fs.readFileSync(schedulesPath, 'utf8'));
-        if (fs.existsSync(monitorConfigPath)) {
-            const data = JSON.parse(fs.readFileSync(monitorConfigPath, 'utf8'));
-            // Migração simples para evitar crash se vier do formato antigo
-            if (data.groupId && !data.recipients) {
-                data.recipients = [data.groupId];
-                delete data.groupId;
-            }
-            monitorConfig = { ...monitorConfig, ...data };
-        }
-    } catch (e) {
-        console.error('Erro ao carregar dados:', e);
-    }
-}
-loadData();
-
-function saveData() {
-    try {
-        fs.writeFileSync(schedulesPath, JSON.stringify(schedules, null, 2));
-        fs.writeFileSync(monitorConfigPath, JSON.stringify(monitorConfig, null, 2));
-    } catch (e) {
-        console.error('Erro ao salvar dados:', e);
-    }
-}
-
-// Função Principal de Verificação de Reservas
-async function runReservationCheck() {
-    if (!monitorConfig.recipients || monitorConfig.recipients.length === 0) {
-        console.log('⚠️ Monitoramente pulado: Nenhum destinatário configurado.');
-        return;
-    }
-
-    console.log('🔎 Verificando reservas no Firebase...');
-    const alerts = await checkUpcomingReservations();
-
-    if (alerts.length > 0) {
-        for (const alert of alerts) {
-            // Envia para cada destinatário
-            for (const recipientId of monitorConfig.recipients) {
-                try {
-                    const sentMsg = await client.sendMessage(recipientId, alert.message);
-                    
-                    // Tenta fixar mensagem (Pin por 7 dias)
-                    try {
-                        if (typeof sentMsg.pin === 'function') {
-                            await sentMsg.pin(604800); // 7 dias
-                            console.log(`📌 Fixada em ${recipientId}`);
-                        } else {
-                            console.log(`⚠️ Método .pin() não disponível para ${recipientId}`);
-                        }
-                    } catch (pinError) {
-                            console.log(`⚠️ Falha ao fixar:`, pinError.message);
-                    }
-                } catch (err) {
-                     console.error(`❌ Falha ao enviar para ${recipientId}:`, err);
-                }
-            }
-        }
-    } else {
-        console.log('Nenhuma reserva relevante para alertar agora.');
-    }
-}
-
-// Ticker do Agendador (roda a cada 60s)
-const moment = require('moment'); 
-
-setInterval(() => {
-    const now = new Date();
-    const currentDay = now.getDay(); 
-    const currentHour = String(now.getHours()).padStart(2, '0');
-    const currentMinute = String(now.getMinutes()).padStart(2, '0');
-    const currentTime = `${currentHour}:${currentMinute}`;
-
-    // 1. Agendamentos Manuais
-    schedules.forEach(schedule => {
-        if (schedule.time === currentTime && schedule.days.includes(currentDay)) {
-            if (!schedule.lastSent || schedule.lastSent !== new Date().toDateString() + currentTime) {
-                console.log(`🚀 Executando agendamento para ${schedule.phone}`);
-                const chatId = `${schedule.phone}@c.us`; 
-                client.sendMessage(chatId, schedule.message).then(() => {
-                    schedule.lastSent = new Date().toDateString() + currentTime;
-                }).catch(err => console.error('❌', err));
-            }
-        }
-    });
-
-    // 2. Monitoramento Automático (Configurável)
-    if (monitorConfig.enabled && currentTime === monitorConfig.checkTime) {
-        runReservationCheck();
-    }
-
-}, 60000); 
+// --- AGENDAMENTO DE MENSAGENS E MONITORAMENTO ---
 
 // Endpoints de Agendamento
-app.get('/api/schedules', (req, res) => res.json(schedules));
+app.get('/api/schedules', async (req, res) => {
+    // Sempre busca fresco do banco para garantir sincronia
+    schedules = await scheduleService.getAllSchedules();
+    res.json(schedules);
+});
 
-app.post('/api/schedules', (req, res) => {
+app.post('/api/schedules', async (req, res) => {
     const { phone, message, time, days, name } = req.body;
     if (!phone || !message || !time || !days) return res.status(400).json({ error: 'Campos obrigatórios.' });
 
-    const newSchedule = {
-        id: Date.now().toString(),
-        name: name || '',
-        phone: phone.replace(/\D/g, ''),
-        message,
-        time,
-        days
-    };
-    schedules.push(newSchedule);
-    saveData();
-    res.json({ message: 'Criado.', schedule: newSchedule });
+    try {
+        const newSchedule = {
+            name: name || '',
+            phone: phone.replace(/\D/g, ''),
+            message,
+            time,
+            days,
+            lastSent: null
+        };
+        
+        const created = await scheduleService.addSchedule(newSchedule);
+        schedules.push(created); // Atualiza memória local
+        res.json({ message: 'Criado.', schedule: created });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao criar agendamento.' });
+    }
 });
 
-app.delete('/api/schedules/:id', (req, res) => {
-    schedules = schedules.filter(s => s.id !== req.params.id);
-    saveData();
-    res.json({ message: 'Deletado.' });
+app.delete('/api/schedules/:id', async (req, res) => {
+    try {
+        await scheduleService.deleteSchedule(req.params.id);
+        schedules = schedules.filter(s => s.id !== req.params.id); // Atualiza memória local
+        res.json({ message: 'Deletado.' });
+    } catch (error) {
+         res.status(500).json({ error: 'Erro ao deletar.' });
+    }
 });
 
 // Endpoints de Configuração do Monitor
 app.get('/api/monitor-config', (req, res) => res.json(monitorConfig));
 
-app.post('/api/monitor-config', (req, res) => {
+app.post('/api/monitor-config', async (req, res) => {
     monitorConfig = { ...monitorConfig, ...req.body };
-    saveData();
-    res.json({ message: 'Configuração salva.', config: monitorConfig });
+    const success = await configService.updateMonitorConfig(monitorConfig);
+    
+    if (success) {
+        res.json({ message: 'Configuração salva.', config: monitorConfig });
+    } else {
+        res.status(500).json({ error: 'Erro ao salvar configuração.' });
+    }
 });
 
 app.post('/api/monitor-run', async (req, res) => {

@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
-        "start": "node index.js"
+        "start": "node api/index.js"
     },
     "dependencies": {
         "@adiwajshing/baileys": "^5.0.0",
@@ -12,6 +12,7 @@
         "cors": "^2.8.5",
         "express": "^4.21.2",
         "firebase": "^12.6.0",
+        "firebase-admin": "^13.6.0",
         "fix": "^0.0.3",
         "fs-extra": "^11.3.0",
         "moment": "^2.30.1",

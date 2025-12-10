@@ -1,2 +1,10 @@
 node_modules
 .vercel
+.wwebjs_auth
+.wwebjs_cache
+*.log
+# Ignora chaves de segurança (IMPORTANTE)
+site-chacara-da-paz-*.json
+botConfig.json
+monitorConfig.json
+schedules.json

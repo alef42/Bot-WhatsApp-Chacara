@@ -1,18 +1,16 @@
-const { initializeApp } = require("firebase/app");
-const { getFirestore } = require("firebase/firestore");
+const admin = require("firebase-admin");
+const path = require("path");
 
-// Credenciais (copiadas do frontend)
-const firebaseConfig = {
-  apiKey: "AIzaSyAMVmaejX6BGstNbklsVPMtMibeRZidnd0",
-  authDomain: "site-chacara-da-paz-6d1bd.firebaseapp.com",
-  projectId: "site-chacara-da-paz-6d1bd",
-  storageBucket: "site-chacara-da-paz-6d1bd.firebasestorage.app",
-  messagingSenderId: "266195180665",
-  appId: "1:266195180665:web:c6c9d3eac31210e65d48a8",
-  measurementId: "G-4R2KWQFBC2"
-};
+// Carrega a chave de conta de serviço
+const serviceAccount = require("./site-chacara-da-paz-6d1bd-firebase-adminsdk-fbsvc-8dade94cb7.json");
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// Inicializa o Admin SDK (Privilégio Total)
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+    });
+}
+
+const db = admin.firestore();
 
 module.exports = { db };
