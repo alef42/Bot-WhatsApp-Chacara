@@ -79,11 +79,13 @@ async function startServer() {
                     '--disable-background-timer-throttling',
                     '--disable-backgrounding-occluded-windows',
                     '--disable-renderer-backgrounding',
-                    '--disable-sync'
+                    '--disable-sync',
+                    '--blink-settings=imagesEnabled=false', // Desativa Imagens (Economia RAM)
+                    '--disable-remote-fonts', // Desativa Fontes
                 ]
             }
         });
-
+        
         // --- EVENTOS DO CLIENTE ---
 
         client.on('qr', (qr) => {
