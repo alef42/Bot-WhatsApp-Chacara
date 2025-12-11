@@ -70,7 +70,16 @@ async function startServer() {
                     '--disable-accelerated-2d-canvas',
                     '--no-first-run',
                     '--no-zygote',
-                    '--disable-gpu'
+                    '--disable-gpu',
+                    '--disable-extensions',
+                    '--disable-component-extensions-with-background-pages',
+                    '--disable-default-apps',
+                    '--mute-audio',
+                    '--no-default-browser-check',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-renderer-backgrounding',
+                    '--disable-sync'
                 ]
             }
         });
@@ -131,6 +140,11 @@ async function startServer() {
 
         app.use(cors());
         app.use(express.json());
+        
+        // Rota Raiz para Health Check do Render
+        app.get('/', (req, res) => {
+            res.send('🤖 Bot WhatsApp Chácara da Paz está Online!');
+        });
 
         app.get('/api/status', (req, res) => {
             res.json({
