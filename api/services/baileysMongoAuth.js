@@ -1,23 +1,52 @@
 const mongoose = require('mongoose');
 
-// Schema para armazenar as credenciais da sessão (AuthState)
+// Schema para armazenar as credenciais
 const AuthSchema = new mongoose.Schema({
-    _id: String,   // Nome do arquivo de credencial (ex: 'creds.json', 'app-state-sync-version-...')
-    data: Object   // O conteúdo JSON da credencial
+    _id: String,
+    data: Object
 });
 
-const AuthModel = mongoose.models.BaileysAuth || mongoose.model('BaileysAuth', AuthSchema);
+// Usando um nome de colection novo para garantir que não haja sujeira antiga
+const AuthModel = mongoose.models.WhatsAppSession || mongoose.model('WhatsAppSession', AuthSchema);
+
+// Helper para converter Buffers em String Base64 recursivamente
+const bufferToBase64 = (obj) => {
+    if (Buffer.isBuffer(obj)) return { type: 'Buffer', data: obj.toString('base64') };
+    if (Array.isArray(obj)) return obj.map(bufferToBase64);
+    if (obj && typeof obj === 'object') {
+        const newObj = {};
+        for (const key in obj) {
+            newObj[key] = bufferToBase64(obj[key]);
+        }
+        return newObj;
+    }
+    return obj;
+};
+
+// Helper para converter String Base64 de volta para Buffer recursivamente
+const base64ToBuffer = (obj) => {
+    if (obj && typeof obj === 'object' && obj.type === 'Buffer' && typeof obj.data === 'string') {
+        return Buffer.from(obj.data, 'base64');
+    }
+    if (Array.isArray(obj)) return obj.map(base64ToBuffer);
+    if (obj && typeof obj === 'object') {
+        const newObj = {};
+        for (const key in obj) {
+            newObj[key] = base64ToBuffer(obj[key]);
+        }
+        return newObj;
+    }
+    return obj;
+};
 
 module.exports = async () => {
-    const { initAuthCreds, BufferJSON } = require('@whiskeysockets/baileys');
+    const { initAuthCreds } = require('@whiskeysockets/baileys');
     
-    // Funções auxiliares tipadas implicitamente
     const read = async (key) => {
         try {
             const res = await AuthModel.findById(key);
             if (res && res.data) {
-                // BufferJSON.reviver ajuda a restaurar Buffers que foram viraram string no JSON
-                return JSON.parse(JSON.stringify(res.data), BufferJSON.reviver);
+                return base64ToBuffer(res.data);
             }
         } catch (e) {
              console.error('Mongo Read Error:', e);
@@ -26,23 +55,17 @@ module.exports = async () => {
     };
 
     const write = async (key, data) => {
-        try {
-            // console.log(`💾 Saving auth data: ${key}`); // Verbose debug
-            await AuthModel.findByIdAndUpdate(
+        try { // Single write fallback
+             await AuthModel.findByIdAndUpdate(
                 key, 
-                { _id: key, data: JSON.parse(JSON.stringify(data, BufferJSON.replacer)) },
+                { _id: key, data: bufferToBase64(data) },
                 { upsert: true }
-            );
-        } catch(e) {
-            console.error('Mongo Write Error:', e);
-        }
+             );
+        } catch(e) { console.error('Mongo Write Error:', e); }
     };
-    
+
     const remove = async (key) => {
-        try { 
-            console.log(`🗑️ Removing auth data: ${key}`);
-            await AuthModel.findByIdAndDelete(key); 
-        } 
+        try { await AuthModel.findByIdAndDelete(key); } 
         catch(e) { console.error('Mongo Remove Error:', e); }
     };
 
@@ -63,24 +86,42 @@ module.exports = async () => {
                     return data;
                 },
                 set: async (data) => {
-                    const tasks = [];
+                    const ops = [];
                     for (const category in data) {
                         for (const id in data[category]) {
                             const value = data[category][id];
                             const key = `${category}-${id}`;
                             if (value) {
-                                tasks.push(write(key, value));
+                                ops.push({
+                                    updateOne: {
+                                        filter: { _id: key },
+                                        update: { data: bufferToBase64(value) },
+                                        upsert: true
+                                    }
+                                });
                             } else {
-                                tasks.push(remove(key));
+                                ops.push({
+                                    deleteOne: {
+                                        filter: { _id: key }
+                                    }
+                                });
                             }
                         }
                     }
-                    await Promise.all(tasks);
+                    
+                    if (ops.length > 0) {
+                        try {
+                            await AuthModel.bulkWrite(ops);
+                        } catch (e) {
+                            console.error('Mongo BulkWrite Error:', e);
+                        }
+                    }
                 }
             }
         },
         saveCreds: async () => {
-            console.log('💾 Saving CREDS (Critical)...');
+             // Debug para garantir que está salvando
+            // console.log('💾 Saving CREDS...'); 
             await write('creds', creds);
         }
     };
