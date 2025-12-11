@@ -81,20 +81,39 @@ async function startBot() {
     let saveCreds;
     
     try {
-        if (mongoose.connection.readyState === 1) {
-            console.log('🔐 Usando MongoDB Auth...');
-            const auth = await useMongoAuthState();
-            authState = auth.state;
-            saveCreds = auth.saveCreds;
+        // Verifica se está no Render (geralmente tem var RENDER=true ou hostname)
+        // Mas a principal verificação é se temos MONGO_URI
+        const hasMongoURI = !!process.env.MONGO_URI || mongoose.connection.readyState === 1;
+        
+        if (hasMongoURI) {
+            console.log('🔐 [AUTH] Tentando usar MongoDB Auth...');
+            
+            // Garantir conexão se ainda não estiver conectado e URI estiver disponível
+            if (mongoose.connection.readyState !== 1 && process.env.MONGO_URI) {
+                console.log('⏳ [AUTH] Conectando ao Mongo antes de carregar credenciais...');
+                await mongoose.connect(process.env.MONGO_URI.replace(/^['"]|['"]$/g, '').trim());
+            }
+
+            if (mongoose.connection.readyState === 1) {
+                const auth = await useMongoAuthState();
+                authState = auth.state;
+                saveCreds = auth.saveCreds;
+                console.log('✅ [AUTH] MongoDB Auth carregado com sucesso!');
+            } else {
+               throw new Error('Falha ao conectar no MongoDB para carregar Auth.');
+            }
+
         } else {
-             // Fallback para arquivo local (Apenas Dev)
-             console.log('📂 Usando Arquivo Local Auth (auth_info_baileys)...');
+             // Fallback para arquivo local
+             console.log('📂 [AUTH] Usando Arquivo Local (auth_info_baileys)...');
+             console.log('⚠️ [ATENÇÃO] Se estiver no RENDER, a sessão será perdida ao reiniciar sem MONGO_URI.');
+             
              const { state, saveCreds: save } = await useMultiFileAuthState('auth_info_baileys')
              authState = state;
              saveCreds = save;
         }
     } catch (e) {
-        console.error('Erro ao carregar Auth:', e);
+        console.error('❌ [CRITICAL] Erro ao carregar Auth:', e);
         process.exit(1);
     }
 
