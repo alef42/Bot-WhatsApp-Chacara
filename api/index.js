@@ -77,6 +77,7 @@ async function startServer() {
             authStrategy: new LocalAuth(), // Salva a sessão na pasta .wwebjs_auth
             puppeteer: {
                 headless: true,
+                executablePath: '/usr/bin/google-chrome', // FIX: Caminho Exato do Chrome no Linux
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -107,6 +108,9 @@ async function startServer() {
             isConnected = false;
             console.log('📸 QR Code Gerado! Scanear agora:');
             qrcode.generate(qr, { small: true });
+            console.log('\n⚠️ SE O QR CODE SAIR BUGADO, COPIE O CÓDIGO ABAIXO E COLE EM [br.qr-code-generator.com]:');
+            console.log(qr);
+            console.log('---------------------------------------------------\n');
         });
 
         client.on('ready', () => {
